@@ -15,6 +15,8 @@ interface OpenPositionsTableProps {
   title?: string
   description?: string
   compact?: boolean
+  loading?: boolean
+  emptyMessage?: string
 }
 
 export function OpenPositionsTable({
@@ -22,6 +24,8 @@ export function OpenPositionsTable({
   title = 'Open Positions',
   description = 'Live holdings with P&L',
   compact = false,
+  loading = false,
+  emptyMessage = 'No open positions.',
 }: OpenPositionsTableProps) {
   return (
     <TerminalCard padding="none">
@@ -47,7 +51,20 @@ export function OpenPositionsTable({
             </tr>
           </thead>
           <tbody>
-            {positions.map((p) => {
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-secondary">
+                  Loading IBKR paper positions…
+                </td>
+              </tr>
+            ) : positions.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-secondary">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              positions.map((p) => {
               const { pnl, pnlPercent } = getPositionPnL(p)
               const positive = pnl >= 0
 
@@ -94,7 +111,8 @@ export function OpenPositionsTable({
                   </td>
                 </tr>
               )
-            })}
+            })
+            )}
           </tbody>
         </table>
       </div>

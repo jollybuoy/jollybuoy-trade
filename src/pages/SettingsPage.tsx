@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Shield } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { BrokerConnectionSection } from '@/components/settings/BrokerConnectionSection'
@@ -7,16 +7,68 @@ import { RiskControlsSection } from '@/components/settings/RiskControlsSection'
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection'
 import { AccountSecuritySection } from '@/components/settings/AccountSecuritySection'
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings'
-import { IBKR_PAPER_ACCOUNT_ID } from '@/data/settingsAnalytics'
+import { useIbkrData } from '@/hooks/useIbkrData'
+import { getIbkrDisconnectedMessage } from '@/services/ibkrMappers'
 import {
   DEFAULT_ACCOUNT_SETTINGS,
   type AccountSettingsState,
+  type BrokerAccount,
 } from '@/types/settings'
+
+function mapStatusToBrokerAccount(
+  status: ReturnType<typeof useIbkrData>['status'],
+  error: string | null,
+  lastUpdated: Date | null,
+  loading: boolean,
+): BrokerAccount {
+  if (loading && !lastUpdated) {
+    return {
+      status: 'pending',
+      accountId: null,
+      lastSync: null,
+      host: status?.host ?? '127.0.0.1',
+      port: status?.port ?? 4002,
+      mode: 'paper',
+    }
+  }
+
+  if (status?.connected) {
+    return {
+      status: 'connected',
+      accountId: status.account,
+      lastSync: lastUpdated?.toISOString() ?? new Date().toISOString(),
+      host: status.host,
+      port: status.port,
+      mode: status.mode === 'paper' ? 'paper' : 'live',
+    }
+  }
+
+  return {
+    status: 'disconnected',
+    accountId: null,
+    lastSync: lastUpdated?.toISOString() ?? null,
+    host: status?.host ?? '127.0.0.1',
+    port: status?.port ?? 4002,
+    mode: 'paper',
+    errorMessage: getIbkrDisconnectedMessage(error ?? status?.error),
+  }
+}
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<AccountSettingsState>(DEFAULT_ACCOUNT_SETTINGS)
   const [toast, setToast] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const { status, loading, refreshing, error, lastUpdated, refresh } = useIbkrData()
+
+  useEffect(() => {
+    setSettings((prev) => ({
+      ...prev,
+      broker: {
+        ...prev.broker,
+        paper: mapStatusToBrokerAccount(status, error, lastUpdated, loading || refreshing),
+      },
+    }))
+  }, [status, error, lastUpdated, loading, refreshing])
 
   const showToast = (message: string, duration = 3000) => {
     setToast(message)
@@ -27,40 +79,8 @@ export function SettingsPage() {
     setSettings((prev) => ({ ...prev, ...partial }))
   }
 
-  const connectPaper = () => {
-    setSettings((prev) => ({
-      ...prev,
-      broker: {
-        ...prev.broker,
-        paper: { ...prev.broker.paper, status: 'pending' },
-      },
-    }))
-
-    setTimeout(() => {
-      setSettings((prev) => ({
-        ...prev,
-        broker: {
-          ...prev.broker,
-          paper: {
-            status: 'connected',
-            accountId: IBKR_PAPER_ACCOUNT_ID,
-            lastSync: new Date().toISOString(),
-          },
-        },
-      }))
-      showToast('IBKR Paper Account connected (mock)')
-    }, 1200)
-  }
-
-  const disconnectPaper = () => {
-    setSettings((prev) => ({
-      ...prev,
-      broker: {
-        ...prev.broker,
-        paper: { status: 'disconnected', accountId: null, lastSync: null },
-      },
-    }))
-    showToast('IBKR Paper Account disconnected (mock)')
+  const refreshPaperConnection = () => {
+    void refresh()
   }
 
   const triggerEmergencyStop = () => {
@@ -99,7 +119,7 @@ export function SettingsPage() {
           <div className="flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5">
             <Shield className="h-4 w-4 text-accent" />
             <span className="text-xs font-medium text-accent">
-              {settings.risk.emergencyStopActive ? 'TRADING HALTED' : 'RISK CONTROLS ARMED'}
+              {settings.risk.emergencyStopActive ? 'TRADING HALTED' : 'IBKR Paper Trading Mode'}
             </span>
           </div>
         }
@@ -114,8 +134,8 @@ export function SettingsPage() {
       <BrokerConnectionSection
         paper={settings.broker.paper}
         live={settings.broker.live}
-        onConnectPaper={connectPaper}
-        onDisconnectPaper={disconnectPaper}
+        loading={loading || refreshing}
+        onRefreshPaper={refreshPaperConnection}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

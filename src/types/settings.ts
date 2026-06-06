@@ -4,6 +4,10 @@ export interface BrokerAccount {
   status: BrokerAccountStatus
   accountId: string | null
   lastSync: string | null
+  host?: string | null
+  port?: number | null
+  mode?: 'paper' | 'live' | null
+  errorMessage?: string | null
 }
 
 export interface BrokerConnectionState {

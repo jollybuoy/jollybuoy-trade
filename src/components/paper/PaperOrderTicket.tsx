@@ -9,6 +9,7 @@ interface PaperOrderTicketProps {
   buyingPower: number
   onChange: (form: PaperOrderForm) => void
   onSubmit: () => void
+  submitDisabled?: boolean
 }
 
 export function PaperOrderTicket({
@@ -16,6 +17,7 @@ export function PaperOrderTicket({
   buyingPower,
   onChange,
   onSubmit,
+  submitDisabled = false,
 }: PaperOrderTicketProps) {
   const update = <K extends keyof PaperOrderForm>(key: K, value: PaperOrderForm[K]) => {
     onChange({ ...form, [key]: value })
@@ -27,7 +29,7 @@ export function PaperOrderTicket({
     <TerminalCard glow="ai">
       <TerminalCardHeader
         title="Paper Order Ticket"
-        description="Manual execution · Simulated fills only"
+        description="Order placement disabled — IBKR paper data is read-only in the portal"
       />
 
       <div className="space-y-3">
@@ -158,9 +160,10 @@ export function PaperOrderTicket({
         <button
           type="button"
           onClick={onSubmit}
-          className="w-full rounded-lg bg-accent py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-muted"
+          disabled={submitDisabled}
+          className="w-full rounded-lg bg-accent py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Submit Paper Order
+          {submitDisabled ? 'Order Placement Disabled' : 'Submit Paper Order'}
         </button>
       </div>
     </TerminalCard>

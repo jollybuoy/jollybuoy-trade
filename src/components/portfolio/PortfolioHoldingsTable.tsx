@@ -6,11 +6,15 @@ import { cn, formatCurrency, formatPercent, getChangeColor } from '@/lib/utils'
 interface PortfolioHoldingsTableProps {
   holdings: PortfolioHolding[]
   totalPortfolioValue: number
+  loading?: boolean
+  emptyMessage?: string
 }
 
 export function PortfolioHoldingsTable({
   holdings,
   totalPortfolioValue,
+  loading = false,
+  emptyMessage = 'No holdings found.',
 }: PortfolioHoldingsTableProps) {
   return (
     <TerminalCard padding="none">
@@ -50,7 +54,20 @@ export function PortfolioHoldingsTable({
             </tr>
           </thead>
           <tbody>
-            {holdings.map((holding) => {
+            {loading ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-12 text-center text-sm text-text-secondary">
+                  Loading IBKR paper holdings…
+                </td>
+              </tr>
+            ) : holdings.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-12 text-center text-sm text-text-secondary">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              holdings.map((holding) => {
               const marketValue = holding.quantity * holding.currentPrice
               const cost = holding.quantity * holding.avgCost
               const pnl = marketValue - cost
@@ -116,7 +133,8 @@ export function PortfolioHoldingsTable({
                   </td>
                 </tr>
               )
-            })}
+            })
+            )}
           </tbody>
         </table>
       </div>

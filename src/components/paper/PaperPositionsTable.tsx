@@ -5,16 +5,23 @@ import { cn, formatCurrency, formatPercent, getChangeColor } from '@/lib/utils'
 
 interface PaperPositionsTableProps {
   positions: PaperPositionRow[]
-  onClose: (id: string) => void
+  onClose?: (id: string) => void
+  loading?: boolean
+  disableClose?: boolean
 }
 
-export function PaperPositionsTable({ positions, onClose }: PaperPositionsTableProps) {
+export function PaperPositionsTable({
+  positions,
+  onClose,
+  loading = false,
+  disableClose = false,
+}: PaperPositionsTableProps) {
   return (
     <TerminalCard padding="none">
       <div className="border-b border-border-subtle p-5">
         <TerminalCardHeader
           title="Open Positions"
-          description={`${positions.length} simulated holdings`}
+          description={`${positions.length} IBKR paper holdings`}
         />
       </div>
 
@@ -45,10 +52,16 @@ export function PaperPositionsTable({ positions, onClose }: PaperPositionsTableP
             </tr>
           </thead>
           <tbody>
-            {positions.length === 0 ? (
+            {loading ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-secondary">
-                  No open paper positions.
+                  Loading IBKR paper positions…
+                </td>
+              </tr>
+            ) : positions.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-secondary">
+                  No paper positions found. Place a paper trade from IBKR/TWS or later from JollyBuoy Trade.
                 </td>
               </tr>
             ) : (
@@ -95,11 +108,12 @@ export function PaperPositionsTable({ positions, onClose }: PaperPositionsTableP
                     <td className="px-4 py-3 text-center">
                       <button
                         type="button"
-                        onClick={() => onClose(pos.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1.5 text-[11px] font-medium text-danger transition-colors hover:bg-danger/20"
+                        onClick={() => onClose?.(pos.id)}
+                        disabled={disableClose}
+                        className="inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1.5 text-[11px] font-medium text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <X className="h-3 w-3" />
-                        Close
+                        {disableClose ? 'Disabled' : 'Close'}
                       </button>
                     </td>
                   </tr>

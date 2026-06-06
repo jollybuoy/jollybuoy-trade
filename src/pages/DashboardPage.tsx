@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { BotStatusCard } from '@/components/terminal/BotStatusCard'
 import { RiskControlPanel } from '@/components/terminal/RiskControlPanel'
 import { PerformanceChart } from '@/components/terminal/PerformanceChart'
@@ -6,16 +7,21 @@ import { TerminalCard, TerminalCardHeader } from '@/components/terminal/Terminal
 import { StatCard } from '@/components/ui/StatCard'
 import { AllocationChart, AllocationLegend } from '@/components/charts/PortfolioChart'
 import { LiveQuoteStrip } from '@/components/market/LiveQuoteStrip'
+import { MarketDataBanner } from '@/components/market/MarketDataBanner'
+import { useIbkrData } from '@/hooks/useIbkrData'
 import {
-  portfolioSummary,
+  formatIbkrCurrency,
+  getIbkrDisconnectedMessage,
+  mapIbkrPositionToDashboardPosition,
+} from '@/services/ibkrMappers'
+import {
   portfolioHistory,
-  positions,
   sectorAllocation,
   recentActivity,
   botStatus,
   riskControls,
 } from '@/data/mockData'
-import { formatCurrency, formatPercent, formatDateTime, cn } from '@/lib/utils'
+import { formatDateTime, cn } from '@/lib/utils'
 import { TrendingUp, Wallet, DollarSign, BrainCircuit } from 'lucide-react'
 
 const activityColors: Record<string, string> = {
@@ -26,13 +32,24 @@ const activityColors: Record<string, string> = {
 }
 
 export function DashboardPage() {
+  const { account, positions, loading, refreshing, error, status, lastUpdated, refresh } =
+    useIbkrData({ refreshIntervalMs: 60_000 })
+
+  const dashboardPositions = useMemo(
+    () => positions.map(mapIbkrPositionToDashboardPosition),
+    [positions],
+  )
+
+  const currency = account?.currency ?? 'USD'
+  const connected = Boolean(status?.connected && account)
+
   return (
     <div className="terminal-grid space-y-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-accent pulse-live" />
           <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted">
-            Live Terminal · Paper Mode
+            IBKR Paper Trading Mode
           </span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight">
@@ -40,21 +57,49 @@ export function DashboardPage() {
         </h1>
       </div>
 
+      <MarketDataBanner
+        loading={loading && !account}
+        refreshing={refreshing}
+        errorMessage={connected ? null : getIbkrDisconnectedMessage(error ?? status?.error)}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           variant="terminal"
-          label="Portfolio Value"
-          value={formatCurrency(portfolioSummary.totalValue)}
-          change={`${formatPercent(portfolioSummary.dayChangePercent)} (${formatCurrency(portfolioSummary.dayChange)}) today`}
-          changeValue={portfolioSummary.dayChangePercent}
+          label="Net Liquidation"
+          value={
+            connected
+              ? formatIbkrCurrency(account!.netLiquidation, currency)
+              : loading
+                ? '…'
+                : '—'
+          }
+          change={
+            connected
+              ? `Available funds: ${formatIbkrCurrency(account!.availableFunds, currency)}`
+              : 'Connect IB Gateway paper account'
+          }
+          changeValue={account?.unrealizedPnL ?? 0}
           icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
           variant="terminal"
-          label="Total P&L"
-          value={formatCurrency(portfolioSummary.totalPnL)}
-          change={`${formatPercent(portfolioSummary.totalPnLPercent)} all time`}
-          changeValue={portfolioSummary.totalPnLPercent}
+          label="Unrealized P/L"
+          value={
+            connected
+              ? formatIbkrCurrency(account!.unrealizedPnL, currency)
+              : loading
+                ? '…'
+                : '—'
+          }
+          change={
+            connected
+              ? `Realized P/L: ${formatIbkrCurrency(account!.realizedPnL, currency)}`
+              : 'Paper account only'
+          }
+          changeValue={account?.unrealizedPnL ?? 0}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <StatCard
@@ -67,8 +112,18 @@ export function DashboardPage() {
         <StatCard
           variant="terminal"
           label="Buying Power"
-          value={formatCurrency(portfolioSummary.buyingPower)}
-          change={`Cash: ${formatCurrency(portfolioSummary.cash)}`}
+          value={
+            connected
+              ? formatIbkrCurrency(account!.buyingPower, currency)
+              : loading
+                ? '…'
+                : '—'
+          }
+          change={
+            connected
+              ? `Cash: ${formatIbkrCurrency(account!.totalCashValue, currency)}`
+              : 'No live trading enabled'
+          }
           icon={<DollarSign className="h-4 w-4" />}
         />
       </div>
@@ -90,7 +145,11 @@ export function DashboardPage() {
         </TerminalCard>
       </div>
 
-      <OpenPositionsTable positions={positions} />
+      <OpenPositionsTable
+        positions={dashboardPositions}
+        loading={loading && !connected}
+        emptyMessage="No open paper positions yet."
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <TerminalCard className="lg:col-span-2">
@@ -122,20 +181,35 @@ export function DashboardPage() {
         </TerminalCard>
 
         <TerminalCard glow="ai">
-          <TerminalCardHeader title="Quick Stats" />
+          <TerminalCardHeader
+            title="IBKR Paper Account"
+            description={connected ? account!.accountId : 'Disconnected'}
+          />
           <div className="space-y-3">
             {[
-              { label: 'Win Rate (30d)', value: '68.4%', color: 'text-accent' },
-              { label: 'Sharpe Ratio', value: '1.82', color: 'text-ai' },
-              { label: 'Max Drawdown', value: '-3.2%', color: 'text-warning' },
-              { label: 'Active Strategies', value: '2 / 4', color: 'text-text-primary' },
-            ].map((s) => (
+              {
+                label: 'Gross Position Value',
+                value: connected ? formatIbkrCurrency(account!.grossPositionValue, currency) : '—',
+              },
+              {
+                label: 'Available Funds',
+                value: connected ? formatIbkrCurrency(account!.availableFunds, currency) : '—',
+              },
+              {
+                label: 'Excess Liquidity',
+                value: connected ? formatIbkrCurrency(account!.excessLiquidity, currency) : '—',
+              },
+              {
+                label: 'Realized P/L',
+                value: connected ? formatIbkrCurrency(account!.realizedPnL, currency) : '—',
+              },
+            ].map((item) => (
               <div
-                key={s.label}
+                key={item.label}
                 className="flex items-center justify-between rounded-lg border border-border-subtle/60 bg-surface/40 px-3 py-2"
               >
-                <span className="text-xs text-text-secondary">{s.label}</span>
-                <span className={cn('font-mono text-sm font-bold', s.color)}>{s.value}</span>
+                <span className="text-xs text-text-secondary">{item.label}</span>
+                <span className="font-mono text-sm font-bold text-text-primary">{item.value}</span>
               </div>
             ))}
           </div>

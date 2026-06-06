@@ -78,7 +78,27 @@ Disconnected cleanly.
 | Connection timed out | Gateway is open but API is disabled or blocked |
 | Login expired / session invalid | IB Gateway login expired — log in again |
 
-## 4. Deactivate the virtual environment
+## 4. Run the local IBKR API for the React portal
+
+With IB Gateway logged into Paper Trading on port **4002**:
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+Endpoints:
+
+- `GET /health`
+- `GET /api/ibkr/status`
+- `GET /api/ibkr/account`
+- `GET /api/ibkr/positions`
+- `GET /api/ibkr/open-orders`
+
+The React app reads this service through `VITE_IBKR_API_URL=http://localhost:8000`.
+
+This API is **read-only** and returns IBKR **paper account** data only.
+
+## 5. Deactivate the virtual environment
 
 When finished:
 
