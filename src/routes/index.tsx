@@ -8,6 +8,7 @@ import { StrategiesPage } from '@/pages/StrategiesPage'
 import { PaperTradingPage } from '@/pages/PaperTradingPage'
 import { TradeHistoryPage } from '@/pages/TradeHistoryPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { BacktestingPage } from '@/pages/BacktestingPage'
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: 'watchlist', element: <WatchlistPage /> },
       { path: 'scanner', element: <MarketScannerPage /> },
       { path: 'strategies', element: <StrategiesPage /> },
+      { path: 'backtesting', element: <BacktestingPage /> },
       { path: 'paper-trading', element: <PaperTradingPage /> },
       { path: 'history', element: <TradeHistoryPage /> },
       { path: 'settings', element: <SettingsPage /> },

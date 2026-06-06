@@ -9,6 +9,7 @@ const pageTitles: Record<string, string> = {
   '/watchlist': 'Watchlist',
   '/scanner': 'Market Scanner',
   '/strategies': 'Strategies',
+  '/backtesting': 'Backtesting',
   '/paper-trading': 'Paper Trading',
   '/history': 'Trade History',
   '/settings': 'Settings',
