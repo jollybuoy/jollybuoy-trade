@@ -1,111 +1,71 @@
-import { Download } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Download, FileText } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
-import { DataTable } from '@/components/ui/DataTable'
-import { StatusBadge } from '@/components/ui/Badge'
-import { tradeHistory } from '@/data/mockData'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { TradeAnalyticsCards } from '@/components/trade-history/TradeAnalyticsCards'
+import { TradeHistoryFiltersPanel } from '@/components/trade-history/TradeHistoryFiltersPanel'
+import { TradeHistoryTable } from '@/components/trade-history/TradeHistoryTable'
+import { TradeAnalyticsCharts } from '@/components/trade-history/TradeAnalyticsCharts'
+import {
+  DAILY_PNL,
+  STRATEGY_PERFORMANCE,
+  TRADE_HISTORY_RECORDS,
+} from '@/data/tradeHistoryAnalytics'
+import { DEFAULT_TRADE_FILTERS } from '@/types/tradeHistory'
+import type { TradeHistoryFilters } from '@/types/tradeHistory'
+import { computeAnalytics, filterTrades } from '@/lib/tradeHistoryUtils'
 
 export function TradeHistoryPage() {
-  const totalVolume = tradeHistory
-    .filter((t) => t.status === 'filled' || t.status === 'partial')
-    .reduce((sum, t) => sum + t.total, 0)
+  const [filters, setFilters] = useState<TradeHistoryFilters>(DEFAULT_TRADE_FILTERS)
+
+  const filteredTrades = useMemo(
+    () => filterTrades(TRADE_HISTORY_RECORDS, filters),
+    [filters],
+  )
+
+  const analytics = useMemo(() => computeAnalytics(filteredTrades), [filteredTrades])
 
   return (
-    <div className="space-y-6">
+    <div className="terminal-grid space-y-6">
       <PageHeader
-        title="Trade History"
-        description="Complete record of all executed trades"
+        title="Trade History & Analytics"
+        description="Review executions, measure performance, and analyze strategy results"
         action={
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-lg border border-ai/30 bg-ai/10 px-4 py-2 text-sm font-medium text-ai transition-colors hover:bg-ai/20"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </button>
+          </div>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Total Trades
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">{tradeHistory.length}</p>
-        </Card>
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Filled Trades
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">
-            {tradeHistory.filter((t) => t.status === 'filled').length}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Total Volume
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">{formatCurrency(totalVolume)}</p>
-        </Card>
-      </div>
+      <TradeAnalyticsCards analytics={analytics} />
 
-      <Card padding="none">
-        <DataTable
-          data={tradeHistory}
-          keyExtractor={(t) => t.id}
-          columns={[
-            {
-              key: 'timestamp',
-              header: 'Date',
-              render: (t) => (
-                <span className="text-text-secondary">{formatDateTime(t.timestamp)}</span>
-              ),
-            },
-            {
-              key: 'symbol',
-              header: 'Symbol',
-              render: (t) => <span className="font-semibold">{t.symbol}</span>,
-            },
-            {
-              key: 'side',
-              header: 'Side',
-              render: (t) => <StatusBadge status={t.side} />,
-            },
-            {
-              key: 'quantity',
-              header: 'Qty',
-              align: 'right',
-              render: (t) => <span className="font-mono">{t.quantity}</span>,
-            },
-            {
-              key: 'price',
-              header: 'Price',
-              align: 'right',
-              render: (t) => <span className="font-mono">{formatCurrency(t.price)}</span>,
-            },
-            {
-              key: 'total',
-              header: 'Total',
-              align: 'right',
-              render: (t) => <span className="font-mono">{formatCurrency(t.total)}</span>,
-            },
-            {
-              key: 'strategy',
-              header: 'Strategy',
-              render: (t) => (
-                <span className="text-text-secondary">{t.strategy ?? 'Manual'}</span>
-              ),
-            },
-            {
-              key: 'status',
-              header: 'Status',
-              align: 'right',
-              render: (t) => <StatusBadge status={t.status} />,
-            },
-          ]}
-        />
-      </Card>
+      <TradeAnalyticsCharts
+        dailyPnL={DAILY_PNL}
+        winningTrades={analytics.winningTrades}
+        losingTrades={analytics.losingTrades}
+        strategyPerformance={STRATEGY_PERFORMANCE}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-4">
+        <div className="xl:col-span-1">
+          <TradeHistoryFiltersPanel filters={filters} onChange={setFilters} />
+        </div>
+        <div className="xl:col-span-3">
+          <TradeHistoryTable trades={filteredTrades} />
+        </div>
+      </div>
     </div>
   )
 }

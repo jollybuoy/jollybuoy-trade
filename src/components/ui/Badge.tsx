@@ -40,6 +40,7 @@ export function StatusBadge({ status }: { status: string }) {
     draft: 'muted',
     cancelled: 'danger',
     partial: 'warning',
+    open: 'info',
     buy: 'success',
     sell: 'danger',
     breakout: 'success',
