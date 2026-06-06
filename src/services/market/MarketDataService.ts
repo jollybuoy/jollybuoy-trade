@@ -1,4 +1,4 @@
-import { MockMarketDataProvider } from '@/services/market/providers/MockMarketDataProvider'
+import { createMarketDataProvider } from '@/services/market/createMarketDataProvider'
 import type { HistoricalData, MarketDataProvider, Quote } from '@/services/market/types'
 
 /**
@@ -8,7 +8,7 @@ import type { HistoricalData, MarketDataProvider, Quote } from '@/services/marke
 export class MarketDataService {
   private provider: MarketDataProvider
 
-  constructor(provider: MarketDataProvider = new MockMarketDataProvider()) {
+  constructor(provider: MarketDataProvider = createMarketDataProvider()) {
     this.provider = provider
   }
 
@@ -38,5 +38,5 @@ export class MarketDataService {
   }
 }
 
-/** Shared singleton for app-wide mock data during Phase 1. */
+/** Shared singleton — defaults to Yahoo Finance via env, mock when configured. */
 export const marketDataService = new MarketDataService()

@@ -7,6 +7,7 @@ import { cn, formatCurrency, formatNumber, formatPercent } from '@/lib/utils'
 interface WatchlistTableProps {
   group: WatchlistGroup
   rows: WatchlistRow[]
+  loading?: boolean
   onAddToStrategy: (symbol: string) => void
 }
 
@@ -16,7 +17,7 @@ const signalStyles: Record<ScannerSignal, { label: string; className: string }> 
   avoid: { label: 'Avoid', className: 'bg-danger/10 text-danger border-danger/20' },
 }
 
-export function WatchlistTable({ group, rows, onAddToStrategy }: WatchlistTableProps) {
+export function WatchlistTable({ group, rows, loading = false, onAddToStrategy }: WatchlistTableProps) {
   return (
     <TerminalCard padding="none" className="overflow-hidden">
       <div className="border-b border-border-subtle p-5">
@@ -82,7 +83,11 @@ export function WatchlistTable({ group, rows, onAddToStrategy }: WatchlistTableP
                     </p>
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-sm font-medium">
-                    {formatCurrency(row.price)}
+                    {loading ? (
+                      <span className="inline-block h-4 w-16 animate-pulse rounded bg-surface-hover" />
+                    ) : (
+                      formatCurrency(row.price)
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span

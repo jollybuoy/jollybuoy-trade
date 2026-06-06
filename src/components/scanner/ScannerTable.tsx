@@ -6,6 +6,7 @@ import { cn, formatCurrency, formatPercent, formatNumber } from '@/lib/utils'
 interface ScannerTableProps {
   rows: ScannerRow[]
   resultCount: number
+  loading?: boolean
 }
 
 const signalStyles: Record<
@@ -17,7 +18,7 @@ const signalStyles: Record<
   avoid: { label: 'Avoid', className: 'bg-danger/10 text-danger border-danger/20' },
 }
 
-export function ScannerTable({ rows, resultCount }: ScannerTableProps) {
+export function ScannerTable({ rows, resultCount, loading = false }: ScannerTableProps) {
   return (
     <TerminalCard padding="none" className="overflow-hidden">
       <div className="border-b border-border-subtle p-5">
@@ -87,7 +88,11 @@ export function ScannerTable({ rows, resultCount }: ScannerTableProps) {
                     <p className="text-[10px] text-text-muted">{row.sector}</p>
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-sm font-medium">
-                    {formatCurrency(row.price)}
+                    {loading ? (
+                      <span className="inline-block h-4 w-16 animate-pulse rounded bg-surface-hover" />
+                    ) : (
+                      formatCurrency(row.price)
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span

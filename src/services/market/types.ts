@@ -3,6 +3,7 @@
 export interface Quote {
   symbol: string
   currentPrice: number
+  previousClose: number
   dailyChange: number
   dailyChangePercent: number
   volume: number

@@ -7,7 +7,7 @@ import { PaperTradingEngine } from '@/trading/PaperTradingEngine'
 
 /**
  * Composition root for JollyBuoy Trade backend services.
- * UI pages remain on mock data until wired to these instances via hooks/API layer.
+ * UI pages use live Yahoo Finance quotes via hooks; paper engine uses MarketDataService.
  *
  * Future:
  * - Supabase Edge Functions orchestrate Python strategy workers

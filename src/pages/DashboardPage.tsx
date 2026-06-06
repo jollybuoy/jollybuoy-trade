@@ -5,9 +5,9 @@ import { OpenPositionsTable } from '@/components/terminal/OpenPositionsTable'
 import { TerminalCard, TerminalCardHeader } from '@/components/terminal/TerminalCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { AllocationChart, AllocationLegend } from '@/components/charts/PortfolioChart'
+import { LiveQuoteStrip } from '@/components/market/LiveQuoteStrip'
 import {
   portfolioSummary,
-  marketIndices,
   portfolioHistory,
   positions,
   sectorAllocation,
@@ -15,14 +15,8 @@ import {
   botStatus,
   riskControls,
 } from '@/data/mockData'
-import {
-  formatCurrency,
-  formatPercent,
-  getChangeColor,
-  formatDateTime,
-  cn,
-} from '@/lib/utils'
-import { TrendingUp, Wallet, DollarSign, BrainCircuit, Activity } from 'lucide-react'
+import { formatCurrency, formatPercent, formatDateTime, cn } from '@/lib/utils'
+import { TrendingUp, Wallet, DollarSign, BrainCircuit } from 'lucide-react'
 
 const activityColors: Record<string, string> = {
   trade: 'bg-accent',
@@ -79,25 +73,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {marketIndices.map((index) => (
-          <div
-            key={index.name}
-            className="flex shrink-0 items-center gap-3 rounded-lg border border-border-subtle bg-surface-elevated/80 px-4 py-2 terminal-glow"
-          >
-            <Activity className="h-3 w-3 text-ai" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              {index.name}
-            </span>
-            <span className="font-mono text-sm font-bold text-text-primary">
-              {index.value.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-            </span>
-            <span className={cn('font-mono text-xs font-medium', getChangeColor(index.changePercent))}>
-              {formatPercent(index.changePercent)}
-            </span>
-          </div>
-        ))}
-      </div>
+      <LiveQuoteStrip />
 
       <div className="grid gap-6 xl:grid-cols-3">
         <BotStatusCard bot={botStatus} />

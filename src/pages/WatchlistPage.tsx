@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { MarketDataBanner } from '@/components/market/MarketDataBanner'
 import { WatchlistGroups } from '@/components/watchlist/WatchlistGroups'
 import { WatchlistTable } from '@/components/watchlist/WatchlistTable'
 import { AddSymbolPanel } from '@/components/watchlist/AddSymbolPanel'
 import { WatchlistAlertSettingsPanel } from '@/components/watchlist/WatchlistAlertSettings'
 import { SEARCHABLE_SYMBOLS, WATCHLIST_BY_GROUP, WATCHLIST_GROUPS } from '@/data/watchlistAnalytics'
+import { useMarketQuotes } from '@/hooks/useMarketQuotes'
+import { mergeQuotesIntoWatchlistRows } from '@/services/market/mergeQuotes'
 import {
   DEFAULT_ADD_SYMBOL_FORM,
   DEFAULT_WATCHLIST_ALERTS,
@@ -14,6 +17,8 @@ import {
   type WatchlistGroupId,
   type WatchlistRow,
 } from '@/types/watchlist'
+
+const WATCHLIST_REFRESH_MS = 60_000
 
 export function WatchlistPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<WatchlistGroupId>('ai-growth')
@@ -37,6 +42,22 @@ export function WatchlistPage() {
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? groups[0]
   const rows = lists[selectedGroupId]
+  const symbols = useMemo(() => rows.map((row) => row.symbol), [rows])
+
+  const {
+    quotes,
+    loading,
+    refreshing,
+    errorMessage,
+    symbolErrors,
+    lastUpdated,
+    refresh,
+  } = useMarketQuotes(symbols, { refreshIntervalMs: WATCHLIST_REFRESH_MS })
+
+  const liveRows = useMemo(
+    () => mergeQuotesIntoWatchlistRows(rows, quotes),
+    [rows, quotes],
+  )
 
   const selectGroup = (id: WatchlistGroupId) => {
     setSelectedGroupId(id)
@@ -56,10 +77,10 @@ export function WatchlistPage() {
     const newRow: WatchlistRow = {
       symbol: addForm.symbol,
       company: match?.company ?? addForm.symbol,
-      price: 100 + Math.random() * 400,
-      changePercent: Number((Math.random() * 6 - 3).toFixed(2)),
-      marketCap: 50_000_000_000 + Math.random() * 200_000_000_000,
-      volume: Math.floor(1_000_000 + Math.random() * 40_000_000),
+      price: 0,
+      changePercent: 0,
+      marketCap: 0,
+      volume: 0,
       rsi: Math.floor(35 + Math.random() * 35),
       aiScore: Math.floor(65 + Math.random() * 25),
       signal: 'watch',
@@ -93,6 +114,15 @@ export function WatchlistPage() {
         }
       />
 
+      <MarketDataBanner
+        loading={loading}
+        refreshing={refreshing}
+        errorMessage={errorMessage}
+        symbolErrorCount={symbolErrors.length}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
+
       {strategyToast && (
         <div className="rounded-lg border border-ai/20 bg-ai/5 px-4 py-2.5 text-sm text-ai">
           {strategyToast}
@@ -109,7 +139,8 @@ export function WatchlistPage() {
         <div className="xl:col-span-2">
           <WatchlistTable
             group={selectedGroup}
-            rows={rows}
+            rows={liveRows}
+            loading={loading && quotes.length === 0}
             onAddToStrategy={addToStrategy}
           />
         </div>
