@@ -13,6 +13,7 @@ const pageTitles: Record<string, string> = {
   '/assistant': 'AI Assistant',
   '/alerts': 'Alerts',
   '/news': 'News & Events',
+  '/reports': 'Reports',
   '/paper-trading': 'Paper Trading',
   '/history': 'Trade History',
   '/settings': 'Settings',

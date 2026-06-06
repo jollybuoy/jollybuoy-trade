@@ -12,6 +12,7 @@ import { BacktestingPage } from '@/pages/BacktestingPage'
 import { AiAssistantPage } from '@/pages/AiAssistantPage'
 import { AlertsPage } from '@/pages/AlertsPage'
 import { NewsEventsPage } from '@/pages/NewsEventsPage'
+import { ReportsPage } from '@/pages/ReportsPage'
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: 'assistant', element: <AiAssistantPage /> },
       { path: 'alerts', element: <AlertsPage /> },
       { path: 'news', element: <NewsEventsPage /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'paper-trading', element: <PaperTradingPage /> },
       { path: 'history', element: <TradeHistoryPage /> },
       { path: 'settings', element: <SettingsPage /> },
