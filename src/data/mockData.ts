@@ -27,38 +27,38 @@ export const marketIndices: MarketIndex[] = [
 ]
 
 export const portfolioHistory: PortfolioSnapshot[] = [
-  { date: '2026-01-06', value: 242_000 },
-  { date: '2026-01-13', value: 245_500 },
-  { date: '2026-01-20', value: 243_800 },
-  { date: '2026-01-27', value: 248_200 },
-  { date: '2026-02-03', value: 251_400 },
-  { date: '2026-02-10', value: 249_900 },
-  { date: '2026-02-17', value: 254_600 },
-  { date: '2026-02-24', value: 258_100 },
-  { date: '2026-03-03', value: 261_800 },
-  { date: '2026-03-10', value: 265_400 },
-  { date: '2026-03-17', value: 268_900 },
-  { date: '2026-03-24', value: 272_300 },
-  { date: '2026-03-31', value: 275_800 },
-  { date: '2026-04-07', value: 273_500 },
-  { date: '2026-04-14', value: 278_200 },
-  { date: '2026-04-21', value: 281_600 },
-  { date: '2026-04-28', value: 279_400 },
-  { date: '2026-05-05', value: 282_100 },
-  { date: '2026-05-12', value: 280_908 },
-  { date: '2026-05-19', value: 283_450 },
-  { date: '2026-05-26', value: 281_200 },
-  { date: '2026-06-02', value: 284_750 },
+  { date: '2026-01-06', value: 242_000, benchmark: 238_000 },
+  { date: '2026-01-13', value: 245_500, benchmark: 239_500 },
+  { date: '2026-01-20', value: 243_800, benchmark: 238_800 },
+  { date: '2026-01-27', value: 248_200, benchmark: 241_200 },
+  { date: '2026-02-03', value: 251_400, benchmark: 243_400 },
+  { date: '2026-02-10', value: 249_900, benchmark: 242_900 },
+  { date: '2026-02-17', value: 254_600, benchmark: 245_600 },
+  { date: '2026-02-24', value: 258_100, benchmark: 247_100 },
+  { date: '2026-03-03', value: 261_800, benchmark: 249_800 },
+  { date: '2026-03-10', value: 265_400, benchmark: 251_400 },
+  { date: '2026-03-17', value: 268_900, benchmark: 253_900 },
+  { date: '2026-03-24', value: 272_300, benchmark: 255_300 },
+  { date: '2026-03-31', value: 275_800, benchmark: 257_800 },
+  { date: '2026-04-07', value: 273_500, benchmark: 256_500 },
+  { date: '2026-04-14', value: 278_200, benchmark: 258_200 },
+  { date: '2026-04-21', value: 281_600, benchmark: 259_600 },
+  { date: '2026-04-28', value: 279_400, benchmark: 258_400 },
+  { date: '2026-05-05', value: 282_100, benchmark: 260_100 },
+  { date: '2026-05-12', value: 280_908, benchmark: 259_908 },
+  { date: '2026-05-19', value: 283_450, benchmark: 261_450 },
+  { date: '2026-05-26', value: 281_200, benchmark: 260_200 },
+  { date: '2026-06-02', value: 284_750, benchmark: 262_750 },
 ]
 
 export const positions: Position[] = [
-  { symbol: 'AAPL', name: 'Apple Inc.', shares: 150, avgCost: 178.42, currentPrice: 195.87, sector: 'Technology' },
-  { symbol: 'MSFT', name: 'Microsoft Corp.', shares: 80, avgCost: 385.2, currentPrice: 412.35, sector: 'Technology' },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', shares: 45, avgCost: 680.5, currentPrice: 892.14, sector: 'Technology' },
-  { symbol: 'JPM', name: 'JPMorgan Chase', shares: 100, avgCost: 168.3, currentPrice: 198.72, sector: 'Financials' },
-  { symbol: 'V', name: 'Visa Inc.', shares: 60, avgCost: 245.8, currentPrice: 278.45, sector: 'Financials' },
-  { symbol: 'UNH', name: 'UnitedHealth Group', shares: 35, avgCost: 520.1, currentPrice: 498.32, sector: 'Healthcare' },
-  { symbol: 'XOM', name: 'Exxon Mobil', shares: 120, avgCost: 98.45, currentPrice: 112.68, sector: 'Energy' },
+  { symbol: 'AAPL', name: 'Apple Inc.', shares: 150, avgCost: 178.42, currentPrice: 195.87, sector: 'Technology', sparkline: [188, 190, 192, 191, 194, 196, 195.87] },
+  { symbol: 'MSFT', name: 'Microsoft Corp.', shares: 80, avgCost: 385.2, currentPrice: 412.35, sector: 'Technology', sparkline: [398, 402, 405, 408, 410, 411, 412.35] },
+  { symbol: 'NVDA', name: 'NVIDIA Corp.', shares: 45, avgCost: 680.5, currentPrice: 892.14, sector: 'Technology', sparkline: [820, 845, 860, 872, 885, 890, 892.14] },
+  { symbol: 'JPM', name: 'JPMorgan Chase', shares: 100, avgCost: 168.3, currentPrice: 198.72, sector: 'Financials', sparkline: [190, 192, 194, 196, 197, 198, 198.72] },
+  { symbol: 'V', name: 'Visa Inc.', shares: 60, avgCost: 245.8, currentPrice: 278.45, sector: 'Financials', sparkline: [268, 270, 272, 274, 276, 277, 278.45] },
+  { symbol: 'UNH', name: 'UnitedHealth Group', shares: 35, avgCost: 520.1, currentPrice: 498.32, sector: 'Healthcare', sparkline: [510, 508, 505, 502, 500, 499, 498.32] },
+  { symbol: 'XOM', name: 'Exxon Mobil', shares: 120, avgCost: 98.45, currentPrice: 112.68, sector: 'Energy', sparkline: [106, 108, 109, 110, 111, 112, 112.68] },
 ]
 
 export const watchlist: WatchlistItem[] = [
@@ -144,7 +144,53 @@ export const paperAccount = {
   dayPnL: 842.18,
   dayPnLPercent: 0.78,
   openPositions: 4,
+  marginUsed: 12_450,
+  marginAvailable: 87_550,
 }
+
+export const paperPositions = [
+  { symbol: 'TSLA', name: 'Tesla Inc.', shares: 25, avgCost: 238.5, currentPrice: 248.92, sparkline: [240, 242, 245, 246, 247, 249, 248.92] },
+  { symbol: 'PLTR', name: 'Palantir Technologies', shares: 200, avgCost: 23.8, currentPrice: 24.86, sparkline: [23.5, 23.8, 24.0, 24.2, 24.5, 24.7, 24.86] },
+  { symbol: 'AMD', name: 'Advanced Micro Devices', shares: 50, avgCost: 172.0, currentPrice: 168.22, sparkline: [175, 173, 171, 170, 169, 168.5, 168.22] },
+  { symbol: 'COIN', name: 'Coinbase Global', shares: 30, avgCost: 215.0, currentPrice: 218.72, sparkline: [212, 214, 216, 217, 218, 219, 218.72] },
+]
+
+export const botStatus = {
+  name: 'JollyBuoy Alpha',
+  status: 'running' as const,
+  uptime: '14h 22m',
+  signalsToday: 12,
+  lastSignal: 'NVDA breakout — 09:42 ET',
+  model: 'GPT-4o + Quant Layer',
+  confidence: 87,
+}
+
+export const riskControls = {
+  maxDailyLoss: 5_000,
+  currentDailyLoss: 420,
+  maxPositionSize: 25_000,
+  currentExposure: 18_240,
+  maxDrawdown: 15,
+  currentDrawdown: 3.2,
+  stopLossEnabled: true,
+  trailingStopEnabled: true,
+}
+
+export const scannerStats = {
+  totalScanned: 4_832,
+  signalsFound: 28,
+  avgScore: 81.4,
+  lastScan: '2026-06-06T10:30:00Z',
+  topSignal: 'SMCI Breakout',
+}
+
+export const strategyBuilderBlocks = [
+  { id: 'b1', type: 'condition' as const, label: 'RSI < 30', value: 'Oversold threshold', icon: 'filter' },
+  { id: 'b2', type: 'filter' as const, label: 'Volume > 2x avg', value: 'Volume confirmation', icon: 'bar-chart' },
+  { id: 'b3', type: 'condition' as const, label: 'Price > SMA(50)', value: 'Trend filter', icon: 'trending-up' },
+  { id: 'b4', type: 'action' as const, label: 'Buy 100 shares', value: 'Market order', icon: 'arrow-up' },
+  { id: 'b5', type: 'action' as const, label: 'Stop Loss -3%', value: 'Risk exit', icon: 'shield' },
+]
 
 export const tradeHistory: Trade[] = [
   { id: 'tr-1', symbol: 'AAPL', side: 'buy', quantity: 50, price: 192.45, total: 9_622.5, timestamp: '2026-06-05T14:22:00Z', status: 'filled', strategy: 'Momentum Breakout' },

@@ -42,19 +42,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border-subtle bg-surface-elevated transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border-subtle bg-surface-elevated/95 backdrop-blur-xl transition-transform duration-200 lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border-subtle px-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-              <Anchor className="h-5 w-5 text-accent" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ai/10 ring-1 ring-ai/20">
+              <Anchor className="h-5 w-5 text-ai" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-text-primary">JollyBuoy</p>
-              <p className="text-[10px] font-medium uppercase tracking-widest text-text-muted">
-                Trade
+              <p className="text-sm font-bold text-text-primary">JollyBuoy</p>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-ai/70">
+                AI Terminal
               </p>
             </div>
           </div>
@@ -79,7 +79,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-accent/10 text-accent'
+                    ? 'bg-ai/10 text-ai ring-1 ring-ai/20'
                     : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                 )
               }
@@ -91,10 +91,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         <div className="border-t border-border-subtle p-4">
-          <div className="rounded-lg bg-surface-hover p-3">
-            <p className="text-xs font-medium text-text-secondary">Paper Account</p>
-            <p className="mt-1 font-mono text-lg font-semibold text-accent">$108,420.50</p>
-            <p className="mt-0.5 text-xs text-text-muted">+$842.18 today</p>
+          <div className="terminal-glow rounded-lg border border-accent/20 bg-accent/5 p-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted">
+              Paper Account
+            </p>
+            <p className="mt-1 font-mono text-lg font-bold text-accent">$108,420.50</p>
+            <p className="mt-0.5 text-xs text-accent/70">+$842.18 today</p>
           </div>
         </div>
       </aside>

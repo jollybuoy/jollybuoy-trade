@@ -13,7 +13,7 @@ import {
 import type { PortfolioSnapshot } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 
-const CHART_COLORS = ['#3fb950', '#58a6ff', '#d29922', '#f85149', '#8b949e']
+const CHART_COLORS = ['#22d3a5', '#5b9dff', '#f5a623', '#ff5c5c', '#5c6b7f']
 
 interface PortfolioChartProps {
   data: PortfolioSnapshot[]

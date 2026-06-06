@@ -26,7 +26,7 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col lg:pl-0">
         <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="terminal-grid flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
