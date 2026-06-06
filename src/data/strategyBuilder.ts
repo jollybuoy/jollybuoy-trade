@@ -1,38 +1,113 @@
 import type {
   BacktestResults,
-  EntryRuleOption,
-  StrategyConfig,
+  ConditionOption,
+  CreateStrategyForm,
+  DeployedStrategy,
   StrategyTypeOption,
 } from '@/types/strategy'
 
-export const STRATEGY_TYPES: StrategyTypeOption[] = [
-  { id: 'momentum', label: 'Momentum', description: 'Follow strong price trends with volume', tag: 'Trend' },
-  { id: 'mean_reversion', label: 'Mean Reversion', description: 'Fade extremes back to fair value', tag: 'Counter' },
-  { id: 'breakout', label: 'Breakout', description: 'Enter on key level violations', tag: 'Aggressive' },
-  { id: 'swing_trading', label: 'Swing Trading', description: 'Multi-day holds on swing setups', tag: 'Medium' },
-  { id: 'ai_strategy', label: 'AI Strategy', description: 'ML-driven signal generation', tag: 'AI' },
-  { id: 'options_strategy', label: 'Options Strategy', description: 'Defined-risk options structures', tag: 'Derivatives' },
-]
-
-export const ENTRY_RULES: EntryRuleOption[] = [
-  { id: 'rsi', label: 'RSI', description: 'Relative Strength Index threshold', defaultParams: 'Period: 14 · Buy < 30 · Sell > 70' },
-  { id: 'macd', label: 'MACD', description: 'Moving Average Convergence Divergence', defaultParams: '12, 26, 9 · Signal cross' },
-  { id: 'ma_cross', label: 'Moving Average Cross', description: 'Golden/death cross detection', defaultParams: 'SMA 20 / SMA 50 cross' },
-  { id: 'price_breakout', label: 'Price Breakout', description: 'Break above resistance level', defaultParams: '20-day high + 1% buffer' },
-  { id: 'volume_spike', label: 'Volume Spike', description: 'Unusual volume confirmation', defaultParams: 'Volume > 2× 20-day avg' },
-]
-
-export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
-  name: 'Untitled Strategy',
-  type: 'momentum',
-  entryRules: ['rsi', 'volume_spike'],
-  risk: {
-    positionSize: 10_000,
-    stopLossPercent: 3,
-    takeProfitPercent: 8,
-    maxDailyLoss: 2_500,
+export const DEPLOYED_STRATEGIES: DeployedStrategy[] = [
+  {
+    id: 'strat-ai-momentum',
+    name: 'AI Momentum Strategy',
+    status: 'running',
+    mode: 'paper',
+    winRate: 68.4,
+    totalPnL: 18_420.5,
+    maxDrawdown: 6.2,
+    riskLevel: 'medium',
   },
-  executionMode: 'paper',
+  {
+    id: 'strat-mean-reversion',
+    name: 'Mean Reversion Strategy',
+    status: 'running',
+    mode: 'paper',
+    winRate: 62.1,
+    totalPnL: 8_240.0,
+    maxDrawdown: 4.8,
+    riskLevel: 'low',
+  },
+  {
+    id: 'strat-breakout',
+    name: 'Breakout Strategy',
+    status: 'paused',
+    mode: 'paper',
+    winRate: 71.3,
+    totalPnL: 14_680.0,
+    maxDrawdown: 9.1,
+    riskLevel: 'high',
+  },
+  {
+    id: 'strat-options',
+    name: 'Options Strategy',
+    status: 'paused',
+    mode: 'paper',
+    winRate: 58.6,
+    totalPnL: 6_120.0,
+    maxDrawdown: 7.5,
+    riskLevel: 'high',
+  },
+  {
+    id: 'strat-dividend',
+    name: 'Dividend Capture Strategy',
+    status: 'running',
+    mode: 'paper',
+    winRate: 74.2,
+    totalPnL: 5_890.0,
+    maxDrawdown: 2.9,
+    riskLevel: 'low',
+  },
+]
+
+export const SYMBOL_OPTIONS = [
+  'AAPL',
+  'MSFT',
+  'NVDA',
+  'TSLA',
+  'GOOGL',
+  'META',
+  'AMZN',
+  'SPY',
+  'QQQ',
+]
+
+export const STRATEGY_TYPE_OPTIONS: StrategyTypeOption[] = [
+  { id: 'ai_momentum', label: 'AI Momentum' },
+  { id: 'mean_reversion', label: 'Mean Reversion' },
+  { id: 'breakout', label: 'Breakout' },
+  { id: 'options', label: 'Options' },
+  { id: 'dividend_capture', label: 'Dividend Capture' },
+  { id: 'swing_trading', label: 'Swing Trading' },
+]
+
+export const ENTRY_CONDITIONS: ConditionOption[] = [
+  { id: 'rsi_oversold', label: 'RSI < 30 (Oversold)' },
+  { id: 'macd_cross', label: 'MACD Bullish Cross' },
+  { id: 'ma_golden', label: 'SMA 20/50 Golden Cross' },
+  { id: 'price_breakout', label: '20-Day High Breakout' },
+  { id: 'volume_spike', label: 'Volume > 2× Average' },
+  { id: 'ai_signal', label: 'AI Confidence > 80%' },
+]
+
+export const EXIT_CONDITIONS: ConditionOption[] = [
+  { id: 'rsi_overbought', label: 'RSI > 70 (Overbought)' },
+  { id: 'macd_bearish', label: 'MACD Bearish Cross' },
+  { id: 'stop_loss', label: 'Stop Loss Hit' },
+  { id: 'take_profit', label: 'Take Profit Target' },
+  { id: 'trailing_stop', label: 'Trailing Stop Triggered' },
+  { id: 'time_exit', label: 'End of Session Exit' },
+]
+
+export const DEFAULT_CREATE_FORM: CreateStrategyForm = {
+  name: '',
+  symbol: 'AAPL',
+  type: 'ai_momentum',
+  entryCondition: 'rsi_oversold',
+  exitCondition: 'take_profit',
+  stopLossPercent: 3,
+  takeProfitPercent: 8,
+  maxPositionSize: 10_000,
+  maxDailyLoss: 2_500,
 }
 
 export const SAMPLE_BACKTEST: BacktestResults = {
@@ -42,21 +117,18 @@ export const SAMPLE_BACKTEST: BacktestResults = {
   profitFactor: 1.87,
   maxDrawdown: 8.4,
   totalTrades: 156,
-  sharpeRatio: 1.64,
-  avgWin: 412,
-  avgLoss: 218,
   equityCurve: [
-    { date: '2025-07', value: 100_000 },
-    { date: '2025-08', value: 102_400 },
-    { date: '2025-09', value: 101_200 },
-    { date: '2025-10', value: 105_800 },
-    { date: '2025-11', value: 108_600 },
-    { date: '2025-12', value: 107_100 },
-    { date: '2026-01', value: 112_400 },
-    { date: '2026-02', value: 115_200 },
-    { date: '2026-03', value: 118_900 },
-    { date: '2026-04', value: 121_500 },
-    { date: '2026-05', value: 123_800 },
-    { date: '2026-06', value: 124_680 },
+    { date: 'Jul', value: 100_000 },
+    { date: 'Aug', value: 102_400 },
+    { date: 'Sep', value: 101_200 },
+    { date: 'Oct', value: 105_800 },
+    { date: 'Nov', value: 108_600 },
+    { date: 'Dec', value: 107_100 },
+    { date: 'Jan', value: 112_400 },
+    { date: 'Feb', value: 115_200 },
+    { date: 'Mar', value: 118_900 },
+    { date: 'Apr', value: 121_500 },
+    { date: 'May', value: 123_800 },
+    { date: 'Jun', value: 124_680 },
   ],
 }

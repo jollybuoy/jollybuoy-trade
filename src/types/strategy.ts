@@ -1,33 +1,41 @@
 export type StrategyType =
-  | 'momentum'
+  | 'ai_momentum'
   | 'mean_reversion'
   | 'breakout'
+  | 'options'
+  | 'dividend_capture'
+  | 'momentum'
   | 'swing_trading'
   | 'ai_strategy'
   | 'options_strategy'
 
-export type EntryRule =
-  | 'rsi'
-  | 'macd'
-  | 'ma_cross'
-  | 'price_breakout'
-  | 'volume_spike'
+export type StrategyStatus = 'running' | 'paused'
+
+export type RiskLevel = 'low' | 'medium' | 'high'
 
 export type ExecutionMode = 'paper' | 'live'
 
-export interface StrategyRiskConfig {
-  positionSize: number
-  stopLossPercent: number
-  takeProfitPercent: number
-  maxDailyLoss: number
+export interface DeployedStrategy {
+  id: string
+  name: string
+  status: StrategyStatus
+  mode: ExecutionMode
+  winRate: number
+  totalPnL: number
+  maxDrawdown: number
+  riskLevel: RiskLevel
 }
 
-export interface StrategyConfig {
+export interface CreateStrategyForm {
   name: string
+  symbol: string
   type: StrategyType
-  entryRules: EntryRule[]
-  risk: StrategyRiskConfig
-  executionMode: ExecutionMode
+  entryCondition: string
+  exitCondition: string
+  stopLossPercent: number
+  takeProfitPercent: number
+  maxPositionSize: number
+  maxDailyLoss: number
 }
 
 export interface BacktestResults {
@@ -37,22 +45,15 @@ export interface BacktestResults {
   profitFactor: number
   maxDrawdown: number
   totalTrades: number
-  sharpeRatio: number
-  avgWin: number
-  avgLoss: number
   equityCurve: { date: string; value: number }[]
 }
 
 export interface StrategyTypeOption {
   id: StrategyType
   label: string
-  description: string
-  tag: string
 }
 
-export interface EntryRuleOption {
-  id: EntryRule
+export interface ConditionOption {
+  id: string
   label: string
-  description: string
-  defaultParams: string
 }
