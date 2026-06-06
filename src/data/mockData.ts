@@ -184,14 +184,6 @@ export const scannerStats = {
   topSignal: 'SMCI Breakout',
 }
 
-export const strategyBuilderBlocks = [
-  { id: 'b1', type: 'condition' as const, label: 'RSI < 30', value: 'Oversold threshold', icon: 'filter' },
-  { id: 'b2', type: 'filter' as const, label: 'Volume > 2x avg', value: 'Volume confirmation', icon: 'bar-chart' },
-  { id: 'b3', type: 'condition' as const, label: 'Price > SMA(50)', value: 'Trend filter', icon: 'trending-up' },
-  { id: 'b4', type: 'action' as const, label: 'Buy 100 shares', value: 'Market order', icon: 'arrow-up' },
-  { id: 'b5', type: 'action' as const, label: 'Stop Loss -3%', value: 'Risk exit', icon: 'shield' },
-]
-
 export const tradeHistory: Trade[] = [
   { id: 'tr-1', symbol: 'AAPL', side: 'buy', quantity: 50, price: 192.45, total: 9_622.5, timestamp: '2026-06-05T14:22:00Z', status: 'filled', strategy: 'Momentum Breakout' },
   { id: 'tr-2', symbol: 'NVDA', side: 'buy', quantity: 10, price: 885.2, total: 8_852.0, timestamp: '2026-06-05T11:08:00Z', status: 'filled', strategy: 'AI Sentiment Alpha' },

@@ -1,29 +1,20 @@
-import { Plus, Play, Pause, Sparkles } from 'lucide-react'
+import { Play, Pause, Sparkles } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { TerminalCard, TerminalCardHeader } from '@/components/terminal/TerminalCard'
-import { StrategyBuilder } from '@/components/terminal/StrategyBuilder'
+import { TerminalCard } from '@/components/terminal/TerminalCard'
+import { AdvancedStrategyBuilder } from '@/components/terminal/AdvancedStrategyBuilder'
 import { StatusBadge } from '@/components/ui/Badge'
-import { strategies, strategyBuilderBlocks } from '@/data/mockData'
+import { strategies } from '@/data/mockData'
 import { formatCurrency, formatDateTime, cn } from '@/lib/utils'
 
 export function StrategiesPage() {
   return (
-    <div className="terminal-grid space-y-6">
+    <div className="terminal-grid space-y-8">
       <PageHeader
         title="Strategy Builder"
-        description="Design, backtest, and deploy AI-powered trading logic"
-        action={
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-accent-muted"
-          >
-            <Plus className="h-4 w-4" />
-            New Strategy
-          </button>
-        }
+        description="Design entry logic, risk parameters, and backtest before deployment"
       />
 
-      <StrategyBuilder blocks={strategyBuilderBlocks} />
+      <AdvancedStrategyBuilder />
 
       <div>
         <div className="mb-4 flex items-center gap-2">
@@ -90,35 +81,6 @@ export function StrategiesPage() {
           ))}
         </div>
       </div>
-
-      <TerminalCard>
-        <TerminalCardHeader
-          title="Strategy Templates"
-          description="Pre-built AI models ready to customize"
-        />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { name: 'Momentum', desc: 'Ride trending stocks with volume', tag: 'Popular' },
-            { name: 'Mean Reversion', desc: 'Buy dips, sell rips on RSI', tag: 'Stable' },
-            { name: 'Breakout', desc: 'Enter on resistance breaks', tag: 'Aggressive' },
-            { name: 'AI Sentiment', desc: 'NLP-driven signal generation', tag: 'AI' },
-          ].map((type) => (
-            <button
-              key={type.name}
-              type="button"
-              className="group rounded-xl border border-border-subtle bg-surface/40 p-4 text-left transition-all hover:border-ai/25 hover:bg-surface-hover/60"
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-text-primary">{type.name}</p>
-                <span className="rounded bg-ai/10 px-1.5 py-0.5 text-[10px] font-medium text-ai">
-                  {type.tag}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-text-secondary">{type.desc}</p>
-            </button>
-          ))}
-        </div>
-      </TerminalCard>
     </div>
   )
 }

@@ -111,11 +111,3 @@ export interface ScannerStats {
   lastScan: string
   topSignal: string
 }
-
-export interface StrategyBlock {
-  id: string
-  type: 'condition' | 'action' | 'filter'
-  label: string
-  value: string
-  icon: string
-}
