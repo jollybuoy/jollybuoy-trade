@@ -10,6 +10,7 @@ const pageTitles: Record<string, string> = {
   '/scanner': 'Market Scanner',
   '/strategies': 'Strategies',
   '/backtesting': 'Backtesting',
+  '/assistant': 'AI Assistant',
   '/paper-trading': 'Paper Trading',
   '/history': 'Trade History',
   '/settings': 'Settings',
