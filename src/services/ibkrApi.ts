@@ -4,15 +4,14 @@ import type {
   IbkrPosition,
   IbkrStatus,
 } from '@/types/ibkr'
+import {
+  getIbkrApiBaseUrl,
+  getIbkrBackendMessage,
+  IBKR_BACKEND_NOT_CONNECTED,
+  isIbkrBackendConfigured,
+} from '@/services/ibkrEnv'
 
-const DEFAULT_BASE_URL = 'http://localhost:8000'
-
-function getBaseUrl(): string {
-  const configured = import.meta.env.VITE_IBKR_API_URL?.trim()
-  return configured && configured.length > 0
-    ? configured.replace(/\/$/, '')
-    : DEFAULT_BASE_URL
-}
+const REQUEST_TIMEOUT_MS = 8_000
 
 export class IbkrApiError extends Error {
   readonly status?: number
@@ -21,6 +20,18 @@ export class IbkrApiError extends Error {
     super(message)
     this.name = 'IbkrApiError'
     this.status = status
+  }
+}
+
+function disconnectedStatus(error: string, errorCode = 'backend_unavailable'): IbkrStatus {
+  return {
+    connected: false,
+    account: null,
+    mode: 'paper',
+    host: '127.0.0.1',
+    port: 4002,
+    error,
+    errorCode,
   }
 }
 
@@ -33,32 +44,52 @@ async function parseError(response: Response): Promise<string> {
   }
 }
 
-async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${getBaseUrl()}${path}`)
-
-  if (!response.ok) {
-    throw new IbkrApiError(await parseError(response), response.status)
+async function safeRequest<T>(path: string): Promise<{ data?: T; error?: string }> {
+  const baseUrl = getIbkrApiBaseUrl()
+  if (!baseUrl || !isIbkrBackendConfigured()) {
+    return { error: IBKR_BACKEND_NOT_CONNECTED }
   }
 
-  return (await response.json()) as T
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${baseUrl}${path}`, { signal: controller.signal })
+
+    if (!response.ok) {
+      return { error: await parseError(response) }
+    }
+
+    return { data: (await response.json()) as T }
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === 'AbortError') {
+      return { error: IBKR_BACKEND_NOT_CONNECTED }
+    }
+    return { error: IBKR_BACKEND_NOT_CONNECTED }
+  } finally {
+    window.clearTimeout(timeout)
+  }
 }
 
-export function getIbkrStatus(): Promise<IbkrStatus> {
-  return request<IbkrStatus>('/api/ibkr/status')
+export async function getIbkrStatus(): Promise<IbkrStatus> {
+  const result = await safeRequest<IbkrStatus>('/api/ibkr/status')
+  if (result.data) return result.data
+  return disconnectedStatus(getIbkrBackendMessage(result.error))
 }
 
-export function getIbkrAccount(): Promise<IbkrAccount> {
-  return request<IbkrAccount>('/api/ibkr/account')
+export async function getIbkrAccount(): Promise<IbkrAccount | null> {
+  const result = await safeRequest<IbkrAccount>('/api/ibkr/account')
+  return result.data ?? null
 }
 
-export function getIbkrPositions(): Promise<IbkrPosition[]> {
-  return request<IbkrPosition[]>('/api/ibkr/positions')
+export async function getIbkrPositions(): Promise<IbkrPosition[]> {
+  const result = await safeRequest<IbkrPosition[]>('/api/ibkr/positions')
+  return result.data ?? []
 }
 
-export function getIbkrOpenOrders(): Promise<IbkrOpenOrder[]> {
-  return request<IbkrOpenOrder[]>('/api/ibkr/open-orders')
+export async function getIbkrOpenOrders(): Promise<IbkrOpenOrder[]> {
+  const result = await safeRequest<IbkrOpenOrder[]>('/api/ibkr/open-orders')
+  return result.data ?? []
 }
 
-export function getIbkrApiBaseUrl(): string {
-  return getBaseUrl()
-}
+export { getIbkrApiBaseUrl, isIbkrBackendConfigured }

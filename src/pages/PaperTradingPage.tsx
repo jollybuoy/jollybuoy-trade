@@ -1,26 +1,22 @@
 import { useMemo, useState } from 'react'
 import { FlaskConical } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { MarketDataBanner } from '@/components/market/MarketDataBanner'
-import { PaperAccountSummaryCards } from '@/components/paper/PaperAccountSummary'
+import { IbkrAccountSummaryCards } from '@/components/ibkr/IbkrAccountSummaryCards'
+import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
 import { PaperOrderTicket } from '@/components/paper/PaperOrderTicket'
 import { PaperPositionsTable } from '@/components/paper/PaperPositionsTable'
 import { PaperOpenOrdersTable } from '@/components/paper/PaperOpenOrdersTable'
 import { RecentPaperTrades } from '@/components/paper/RecentPaperTrades'
 import { BotAutomationPanel } from '@/components/paper/BotAutomationPanel'
 import { useIbkrData } from '@/hooks/useIbkrData'
-import {
-  getIbkrDisconnectedMessage,
-  mapIbkrAccountToPaperSummary,
-  mapIbkrPositionToPaperRow,
-} from '@/services/ibkrMappers'
-import { PAPER_BOT_STATE, PAPER_TRADE_HISTORY } from '@/data/paperTrading'
+import { mapIbkrPositionToPaperRow } from '@/services/ibkrMappers'
+import { PAPER_BOT_STATE } from '@/data/paperTrading'
 import { DEFAULT_PAPER_ORDER } from '@/types/paperTrading'
 import type { PaperBotState, PaperOrderForm } from '@/types/paperTrading'
 
 export function PaperTradingPage() {
-  const { account, positions, openOrders, loading, refreshing, error, status, lastUpdated, refresh } =
-    useIbkrData({ refreshIntervalMs: 60_000 })
+  const { account, positions, openOrders, loading, error, connected, lastUpdated, refresh } =
+    useIbkrData()
 
   const [orderForm, setOrderForm] = useState<PaperOrderForm>(DEFAULT_PAPER_ORDER)
   const [bot, setBot] = useState<PaperBotState>(PAPER_BOT_STATE)
@@ -29,19 +25,6 @@ export function PaperTradingPage() {
     () => positions.map(mapIbkrPositionToPaperRow),
     [positions],
   )
-
-  const connected = Boolean(status?.connected && account)
-  const accountSummary = account
-    ? mapIbkrAccountToPaperSummary(account, paperPositions.length)
-    : {
-        equity: 0,
-        cashBalance: 0,
-        buyingPower: 0,
-        dayPnL: 0,
-        dayPnLPercent: 0,
-        openPositions: 0,
-        marginUsed: 0,
-      }
 
   const startBot = () => {
     setBot((prev) => ({
@@ -82,21 +65,26 @@ export function PaperTradingPage() {
         }
       />
 
-      <MarketDataBanner
-        loading={loading && !account}
-        refreshing={refreshing}
-        errorMessage={connected ? null : getIbkrDisconnectedMessage(error ?? status?.error)}
+      <IbkrBackendBanner
+        loading={loading}
+        error={error}
+        connected={connected}
         lastUpdated={lastUpdated}
         onRetry={() => void refresh()}
       />
 
-      <PaperAccountSummaryCards account={accountSummary} />
+      <IbkrAccountSummaryCards
+        account={account}
+        loading={loading}
+        connected={connected}
+        openPositions={paperPositions.length}
+      />
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2 space-y-6">
           <PaperOrderTicket
             form={orderForm}
-            buyingPower={accountSummary.buyingPower}
+            buyingPower={connected && account ? account.buyingPower : 0}
             onChange={setOrderForm}
             onSubmit={() => undefined}
             submitDisabled
@@ -105,6 +93,7 @@ export function PaperTradingPage() {
             positions={paperPositions}
             loading={loading && !connected}
             disableClose
+            emptyMessage="No open IBKR paper positions found."
           />
           <PaperOpenOrdersTable orders={openOrders} loading={loading && !connected} />
         </div>
@@ -117,7 +106,7 @@ export function PaperTradingPage() {
         />
       </div>
 
-      <RecentPaperTrades trades={PAPER_TRADE_HISTORY} />
+      <RecentPaperTrades trades={[]} />
     </div>
   )
 }

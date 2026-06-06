@@ -44,7 +44,14 @@ export function RecentPaperTrades({ trades }: RecentPaperTradesProps) {
             </tr>
           </thead>
           <tbody>
-            {trades.map((trade) => (
+            {trades.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-text-secondary">
+                  No IBKR trade history available yet.
+                </td>
+              </tr>
+            ) : (
+              trades.map((trade) => (
               <tr
                 key={trade.id}
                 className="border-b border-border-subtle/40 transition-colors hover:bg-surface-hover/30"
@@ -74,7 +81,8 @@ export function RecentPaperTrades({ trades }: RecentPaperTradesProps) {
                 </td>
                 <td className="px-4 py-3 text-sm text-text-secondary">{trade.strategy}</td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>

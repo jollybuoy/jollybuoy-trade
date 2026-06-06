@@ -8,6 +8,7 @@ interface PaperPositionsTableProps {
   onClose?: (id: string) => void
   loading?: boolean
   disableClose?: boolean
+  emptyMessage?: string
 }
 
 export function PaperPositionsTable({
@@ -15,6 +16,7 @@ export function PaperPositionsTable({
   onClose,
   loading = false,
   disableClose = false,
+  emptyMessage = 'No open IBKR paper positions found.',
 }: PaperPositionsTableProps) {
   return (
     <TerminalCard padding="none">
@@ -61,7 +63,7 @@ export function PaperPositionsTable({
             ) : positions.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-secondary">
-                  No paper positions found. Place a paper trade from IBKR/TWS or later from JollyBuoy Trade.
+                  {emptyMessage}
                 </td>
               </tr>
             ) : (

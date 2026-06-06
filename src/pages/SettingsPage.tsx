@@ -7,6 +7,7 @@ import { RiskControlsSection } from '@/components/settings/RiskControlsSection'
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection'
 import { AccountSecuritySection } from '@/components/settings/AccountSecuritySection'
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings'
+import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
 import { useIbkrData } from '@/hooks/useIbkrData'
 import { getIbkrDisconnectedMessage } from '@/services/ibkrMappers'
 import {
@@ -20,6 +21,7 @@ function mapStatusToBrokerAccount(
   error: string | null,
   lastUpdated: Date | null,
   loading: boolean,
+  connected: boolean,
 ): BrokerAccount {
   if (loading && !lastUpdated) {
     return {
@@ -32,7 +34,7 @@ function mapStatusToBrokerAccount(
     }
   }
 
-  if (status?.connected) {
+  if (connected && status) {
     return {
       status: 'connected',
       accountId: status.account,
@@ -58,17 +60,17 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<AccountSettingsState>(DEFAULT_ACCOUNT_SETTINGS)
   const [toast, setToast] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const { status, loading, refreshing, error, lastUpdated, refresh } = useIbkrData()
+  const { status, loading, error, lastUpdated, connected, refresh } = useIbkrData()
 
   useEffect(() => {
     setSettings((prev) => ({
       ...prev,
       broker: {
         ...prev.broker,
-        paper: mapStatusToBrokerAccount(status, error, lastUpdated, loading || refreshing),
+        paper: mapStatusToBrokerAccount(status, error, lastUpdated, loading, connected),
       },
     }))
-  }, [status, error, lastUpdated, loading, refreshing])
+  }, [status, error, lastUpdated, loading, connected])
 
   const showToast = (message: string, duration = 3000) => {
     setToast(message)
@@ -77,10 +79,6 @@ export function SettingsPage() {
 
   const updateSettings = (partial: Partial<AccountSettingsState>) => {
     setSettings((prev) => ({ ...prev, ...partial }))
-  }
-
-  const refreshPaperConnection = () => {
-    void refresh()
   }
 
   const triggerEmergencyStop = () => {
@@ -125,6 +123,14 @@ export function SettingsPage() {
         }
       />
 
+      <IbkrBackendBanner
+        loading={loading}
+        error={error}
+        connected={connected}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
+
       {toast && (
         <div className="rounded-lg border border-ai/20 bg-ai/5 px-4 py-2.5 text-sm text-ai">
           {toast}
@@ -134,8 +140,8 @@ export function SettingsPage() {
       <BrokerConnectionSection
         paper={settings.broker.paper}
         live={settings.broker.live}
-        loading={loading || refreshing}
-        onRefreshPaper={refreshPaperConnection}
+        loading={loading}
+        onRefreshPaper={() => void refresh()}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

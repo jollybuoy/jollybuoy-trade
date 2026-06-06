@@ -85,9 +85,10 @@ export function formatIbkrCurrency(value: number, currency: string): string {
   }
 }
 
+import { getIbkrBackendMessage } from '@/services/ibkrEnv'
+
 export function getIbkrDisconnectedMessage(error?: string | null): string {
-  if (error) return error
-  return 'Open IB Gateway and login to Paper Trading, then click Refresh.'
+  return getIbkrBackendMessage(error)
 }
 
 export type { IbkrOpenOrder }
