@@ -10,6 +10,7 @@ import { TradeHistoryPage } from '@/pages/TradeHistoryPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { BacktestingPage } from '@/pages/BacktestingPage'
 import { AiAssistantPage } from '@/pages/AiAssistantPage'
+import { AlertsPage } from '@/pages/AlertsPage'
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: 'strategies', element: <StrategiesPage /> },
       { path: 'backtesting', element: <BacktestingPage /> },
       { path: 'assistant', element: <AiAssistantPage /> },
+      { path: 'alerts', element: <AlertsPage /> },
       { path: 'paper-trading', element: <PaperTradingPage /> },
       { path: 'history', element: <TradeHistoryPage /> },
       { path: 'settings', element: <SettingsPage /> },
