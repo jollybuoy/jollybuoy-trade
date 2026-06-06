@@ -8,28 +8,41 @@ export function isLocalDevelopment(): boolean {
   return import.meta.env.DEV
 }
 
+export function isLocalHost(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+}
+
 export function isNetlifyDeployment(): boolean {
-  if (typeof window === 'undefined') return isProductionDeployment()
-  return isProductionDeployment() && !window.location.hostname.includes('localhost')
+  if (typeof window === 'undefined') return isProductionDeployment() && !isLocalHost()
+  return isProductionDeployment() && !isLocalHost()
 }
 
 export function isIbkrBackendConfigured(): boolean {
   const configured = import.meta.env.VITE_IBKR_API_URL?.trim()
   if (configured) return true
-  return isLocalDevelopment()
+  if (isLocalDevelopment() || isLocalHost()) return true
+  return false
 }
 
+/** Empty string = same-origin (Vite dev/preview proxy to port 8000). */
 export function getIbkrApiBaseUrl(): string | null {
   const configured = import.meta.env.VITE_IBKR_API_URL?.trim()
   if (configured) return configured.replace(/\/$/, '')
-  if (isLocalDevelopment()) return 'http://localhost:8000'
+
+  if (isLocalDevelopment() || isLocalHost()) {
+    return ''
+  }
+
   return null
 }
 
 export function getIbkrBackendMessage(error?: string | null): string {
-  if (error) return error
-  if (!isIbkrBackendConfigured() || isNetlifyDeployment()) {
+  if (error && error !== IBKR_BACKEND_NOT_CONNECTED) return error
+
+  if (isNetlifyDeployment() || !isIbkrBackendConfigured()) {
     return IBKR_BACKEND_NOT_CONNECTED
   }
-  return 'IBKR local backend not connected. Open IB Gateway Paper Trading and run uvicorn on port 8000.'
+
+  return 'IBKR local backend not connected. Start IB Gateway (port 4002), then run: cd trading-service && uvicorn main:app --reload --port 8000'
 }

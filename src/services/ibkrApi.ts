@@ -45,16 +45,21 @@ async function parseError(response: Response): Promise<string> {
 }
 
 async function safeRequest<T>(path: string): Promise<{ data?: T; error?: string }> {
-  const baseUrl = getIbkrApiBaseUrl()
-  if (!baseUrl || !isIbkrBackendConfigured()) {
+  if (!isIbkrBackendConfigured()) {
     return { error: IBKR_BACKEND_NOT_CONNECTED }
   }
 
+  const baseUrl = getIbkrApiBaseUrl()
+  if (baseUrl === null) {
+    return { error: IBKR_BACKEND_NOT_CONNECTED }
+  }
+
+  const url = baseUrl ? `${baseUrl}${path}` : path
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
   try {
-    const response = await fetch(`${baseUrl}${path}`, { signal: controller.signal })
+    const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {
       return { error: await parseError(response) }
