@@ -11,9 +11,10 @@ import {
   Cell,
 } from 'recharts'
 import type { PortfolioSnapshot } from '@/types'
+import { chartStyles } from '@/lib/chartStyles'
 import { formatCurrency } from '@/lib/utils'
 
-const CHART_COLORS = ['#22d3a5', '#5b9dff', '#f5a623', '#ff5c5c', '#5c6b7f']
+const CHART_COLORS = ['#22d3a5', '#5b9dff', '#f5a623', '#ff5c5c', '#64748b']
 
 interface PortfolioChartProps {
   data: PortfolioSnapshot[]
@@ -25,14 +26,14 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
       <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3fb950" stopOpacity={0.3} />
-            <stop offset="100%" stopColor="#3fb950" stopOpacity={0} />
+            <stop offset="0%" stopColor="#22d3a5" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="#22d3a5" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.grid.stroke} vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: '#6e7681', fontSize: 11 }}
+          tick={chartStyles.axisTick}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value: string) => {
@@ -42,7 +43,7 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fill: '#6e7681', fontSize: 11 }}
+          tick={chartStyles.axisTick}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value: number) => `$${(value / 1000).toFixed(0)}k`}
@@ -50,13 +51,7 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
           width={55}
         />
         <Tooltip
-          contentStyle={{
-            backgroundColor: '#161b22',
-            border: '1px solid #30363d',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-          labelStyle={{ color: '#8b949e' }}
+          {...chartStyles.tooltip}
           formatter={(value) => [formatCurrency(Number(value)), 'Value']}
           labelFormatter={(label) =>
             new Date(String(label)).toLocaleDateString('en-US', {
@@ -69,7 +64,7 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
         <Area
           type="monotone"
           dataKey="value"
-          stroke="#3fb950"
+          stroke="#22d3a5"
           strokeWidth={2}
           fill="url(#portfolioGradient)"
         />
@@ -100,12 +95,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{
-            backgroundColor: '#161b22',
-            border: '1px solid #30363d',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
+          {...chartStyles.tooltip}
           formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Allocation']}
         />
       </PieChart>

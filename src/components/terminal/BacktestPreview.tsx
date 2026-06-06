@@ -10,6 +10,7 @@ import {
 import { BarChart3, BrainCircuit } from 'lucide-react'
 import { TerminalCard, TerminalCardHeader } from './TerminalCard'
 import type { BacktestResults } from '@/types/strategy'
+import { chartStyles } from '@/lib/chartStyles'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 
 interface BacktestPreviewProps {
@@ -100,15 +101,15 @@ function ResultsView({ results }: { results: BacktestResults }) {
                 <stop offset="100%" stopColor="#22d3a5" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#141b24" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.grid.stroke} vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#5c6b7f', fontSize: 10 }}
+              tick={chartStyles.axisTickSm}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fill: '#5c6b7f', fontSize: 10 }}
+              tick={chartStyles.axisTickSm}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
@@ -116,12 +117,7 @@ function ResultsView({ results }: { results: BacktestResults }) {
               domain={['auto', 'auto']}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: '#0c1017',
-                border: '1px solid #1e2836',
-                borderRadius: '8px',
-                fontSize: '11px',
-              }}
+              {...chartStyles.tooltip}
               formatter={(value) => [formatCurrency(Number(value)), 'Equity']}
             />
             <Area

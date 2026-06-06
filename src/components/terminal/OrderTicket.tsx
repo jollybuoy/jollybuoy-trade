@@ -85,7 +85,7 @@ export function OrderTicket() {
           type="button"
           className={cn(
             'w-full rounded-lg py-3 text-sm font-semibold transition-colors',
-            'bg-accent text-surface hover:bg-accent-muted',
+            'bg-accent text-on-accent hover:bg-accent-muted',
           )}
         >
           Submit Paper Order

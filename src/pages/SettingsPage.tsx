@@ -1,5 +1,7 @@
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardHeader } from '@/components/ui/Card'
+import { ThemeSelector } from '@/components/ui/ThemeToggle'
+import { useTheme } from '@/context/ThemeContext'
 import { userSettings } from '@/data/mockData'
 
 function Toggle({ enabled, label }: { enabled: boolean; label: string }) {
@@ -25,6 +27,8 @@ function Toggle({ enabled, label }: { enabled: boolean; label: string }) {
 }
 
 export function SettingsPage() {
+  const { theme } = useTheme()
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -33,6 +37,19 @@ export function SettingsPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Appearance" description="Customize how JollyBuoy Trade looks" />
+          <div className="space-y-3">
+            <p className="text-xs text-text-secondary">
+              Choose light or dark theme. Your preference is saved automatically.
+            </p>
+            <ThemeSelector />
+            <p className="text-[11px] text-text-muted">
+              Current theme: <span className="font-medium capitalize text-text-primary">{theme}</span>
+            </p>
+          </div>
+        </Card>
+
         <Card>
           <CardHeader title="Profile" description="Your account information" />
           <div className="space-y-4">
@@ -144,7 +161,7 @@ export function SettingsPage() {
       <div className="flex justify-end">
         <button
           type="button"
-          className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-accent-muted"
+          className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-muted"
         >
           Save Changes
         </button>

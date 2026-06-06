@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { TerminalCard, TerminalCardHeader } from './TerminalCard'
 import type { PortfolioSnapshot } from '@/types'
+import { chartStyles } from '@/lib/chartStyles'
 import { formatCurrency, cn } from '@/lib/utils'
 
 const PERIODS = ['1W', '1M', '3M', '6M', 'YTD', 'ALL'] as const
@@ -86,10 +87,10 @@ export function PerformanceChart({ data, className }: PerformanceChartProps) {
               <stop offset="100%" stopColor="#5b9dff" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#141b24" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.grid.stroke} vertical={false} />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#5c6b7f', fontSize: 10 }}
+            tick={chartStyles.axisTickSm}
             tickLine={false}
             axisLine={false}
             tickFormatter={(value: string) =>
@@ -98,7 +99,7 @@ export function PerformanceChart({ data, className }: PerformanceChartProps) {
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: '#5c6b7f', fontSize: 10 }}
+            tick={chartStyles.axisTickSm}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
@@ -107,13 +108,10 @@ export function PerformanceChart({ data, className }: PerformanceChartProps) {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#0c1017',
-              border: '1px solid #1e2836',
-              borderRadius: '8px',
-              fontSize: '12px',
-              boxShadow: '0 8px 32px rgb(0 0 0 / 0.5)',
+              ...chartStyles.tooltip.contentStyle,
+              boxShadow: '0 8px 32px var(--theme-glow-shadow)',
             }}
-            labelStyle={{ color: '#8b9cb3' }}
+            labelStyle={chartStyles.tooltip.labelStyle}
             formatter={(value, name) => [
               formatCurrency(Number(value)),
               name === 'value' ? 'Portfolio' : 'Benchmark',

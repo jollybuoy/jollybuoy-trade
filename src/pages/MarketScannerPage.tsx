@@ -96,7 +96,7 @@ export function MarketScannerPage() {
                           cy="20"
                           r="16"
                           fill="none"
-                          stroke="#141b24"
+                          stroke="var(--color-chart-grid)"
                           strokeWidth="3"
                         />
                         <circle
