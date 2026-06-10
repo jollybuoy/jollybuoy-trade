@@ -1,21 +1,11 @@
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import type {
   AlertOverview,
   AlertRule,
   NotificationFeedItem,
 } from '@/types/alerts'
 
-export const ALERT_SYMBOL_OPTIONS = [
-  'AAPL',
-  'MSFT',
-  'NVDA',
-  'TSLA',
-  'GOOGL',
-  'META',
-  'AMZN',
-  'AMD',
-  'SPY',
-  'QQQ',
-]
+export const ALERT_SYMBOL_OPTIONS = [...MEGA_CAP_7_SYMBOLS]
 
 export const ALERT_OVERVIEW: AlertOverview = {
   activeAlerts: 14,
@@ -46,7 +36,7 @@ export const MOCK_ALERT_RULES: AlertRule[] = [
   },
   {
     id: 'alert-3',
-    symbol: 'AMD',
+    symbol: 'MSFT',
     alertType: 'rsi_level',
     condition: 'RSI < 30 (oversold)',
     status: 'triggered',
@@ -64,7 +54,7 @@ export const MOCK_ALERT_RULES: AlertRule[] = [
   },
   {
     id: 'alert-5',
-    symbol: 'SMCI',
+    symbol: 'AMZN',
     alertType: 'ai_signal',
     condition: 'AI Score ≥ 85 (Buy signal)',
     status: 'active',
@@ -91,9 +81,9 @@ export const MOCK_ALERT_RULES: AlertRule[] = [
   },
   {
     id: 'alert-8',
-    symbol: 'SPY',
+    symbol: 'GOOGL',
     alertType: 'price_below',
-    condition: 'Price < $520.00',
+    condition: 'Price below support level',
     status: 'active',
     lastTriggered: null,
     notificationMethod: 'whatsapp',
@@ -119,7 +109,7 @@ export const MOCK_NOTIFICATION_FEED: NotificationFeedItem[] = [
     id: 'feed-3',
     type: 'stop_loss',
     title: 'Stop Loss Triggered',
-    message: 'AMD position closed at −2.1% — Mean Reversion stop loss rule activated.',
+    message: 'MSFT position closed at −2.1% — Mean Reversion stop loss rule activated.',
     timestamp: '2026-06-06T08:45:00Z',
   },
   {

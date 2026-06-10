@@ -1,3 +1,4 @@
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import type {
   CalendarEvent,
   MarketCalendarSummary,
@@ -6,13 +7,13 @@ import type {
 } from '@/types/newsEvents'
 
 export const MARKET_CALENDAR_SUMMARY: MarketCalendarSummary = {
-  earningsToday: 8,
-  iposThisWeek: 3,
-  fedEvents: 2,
+  earningsToday: 3,
+  iposThisWeek: 0,
+  fedEvents: 1,
   cpiInflation: 1,
   jobsReport: 1,
-  stockSplits: 2,
-  dividendDates: 5,
+  stockSplits: 1,
+  dividendDates: 2,
 }
 
 export const CALENDAR_EVENTS: CalendarEvent[] = [
@@ -42,8 +43,8 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     date: '2026-06-06',
     time: '08:30 ET',
     impact: 'high',
-    tickers: ['SPY', 'QQQ', 'TLT'],
-    description: 'Headline CPI and core CPI — rate path implications.',
+    tickers: [...MEGA_CAP_7_SYMBOLS],
+    description: 'Headline CPI and core CPI — rate path implications for Mega Cap 7.',
   },
   {
     id: 'evt-4',
@@ -52,17 +53,17 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     date: '2026-06-06',
     time: '14:00 ET',
     impact: 'medium',
-    tickers: ['SPY', 'DXY'],
+    tickers: ['AAPL', 'MSFT', 'GOOGL'],
   },
   {
     id: 'evt-5',
-    title: 'Stripe IPO Filing',
+    title: 'AMZN Annual Shareholder Meeting',
     eventType: 'ipo',
     date: '2026-06-09',
     time: '09:00 ET',
     impact: 'medium',
-    tickers: ['STRIPE'],
-    description: 'Expected pricing range announcement.',
+    tickers: ['AMZN'],
+    description: 'Virtual shareholder meeting and guidance update.',
   },
   {
     id: 'evt-6',
@@ -71,11 +72,11 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     date: '2026-06-07',
     time: '08:30 ET',
     impact: 'high',
-    tickers: ['SPY', 'IWM'],
+    tickers: [...MEGA_CAP_7_SYMBOLS],
   },
   {
     id: 'evt-7',
-    title: 'GOOGL 20-for-1 Split',
+    title: 'GOOGL Stock Split Record Date',
     eventType: 'split',
     date: '2026-06-08',
     impact: 'low',
@@ -83,11 +84,11 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
   },
   {
     id: 'evt-8',
-    title: 'JPM Ex-Dividend Date',
+    title: 'MSFT Ex-Dividend Date',
     eventType: 'dividend',
     date: '2026-06-08',
     impact: 'low',
-    tickers: ['JPM'],
+    tickers: ['MSFT'],
   },
   {
     id: 'evt-9',
@@ -105,23 +106,23 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     date: '2026-06-10',
     time: '14:00 ET',
     impact: 'medium',
-    tickers: ['SPY', 'TLT'],
+    tickers: ['NVDA', 'AAPL', 'MSFT'],
   },
   {
     id: 'evt-11',
-    title: 'ARM IPO Anniversary Lockup Expiry',
+    title: 'TSLA Delivery Update',
     eventType: 'ipo',
     date: '2026-06-10',
     impact: 'medium',
-    tickers: ['ARM'],
+    tickers: ['TSLA'],
   },
   {
     id: 'evt-12',
-    title: 'KO Ex-Dividend Date',
+    title: 'AAPL Ex-Dividend Date',
     eventType: 'dividend',
     date: '2026-06-11',
     impact: 'low',
-    tickers: ['KO', 'PEP'],
+    tickers: ['AAPL'],
   },
 ]
 
@@ -129,28 +130,28 @@ export const NEWS_FEED: NewsItem[] = [
   {
     id: 'news-1',
     category: 'market',
-    headline: 'S&P 500 futures flat ahead of CPI print',
-    summary: 'Index futures little changed as traders await May inflation data at 8:30 ET.',
+    headline: 'Mega Cap 7 futures mixed ahead of CPI print',
+    summary: 'Index-weighted leaders little changed as traders await May inflation data at 8:30 ET.',
     source: 'Mock Wire',
     timestamp: '2026-06-06T07:15:00Z',
-    tickers: ['SPY', 'QQQ'],
+    tickers: ['AAPL', 'MSFT', 'NVDA'],
     aiImpactScore: 72,
   },
   {
     id: 'news-2',
     category: 'company',
     headline: 'NVDA supply chain partners raise Q2 guidance',
-    summary: 'Two semiconductor equipment names cited strong AI datacenter demand in filings.',
+    summary: 'Datacenter demand cited in partner filings — positive read-through for NVDA.',
     source: 'Mock Terminal',
     timestamp: '2026-06-06T06:42:00Z',
-    tickers: ['NVDA', 'AVGO', 'TSM'],
+    tickers: ['NVDA'],
     aiImpactScore: 85,
   },
   {
     id: 'news-3',
     category: 'analyst',
     headline: 'MSFT upgraded to Overweight at Mock Securities',
-    summary: 'Price target raised to $450 citing Azure AI monetization trajectory.',
+    summary: 'Price target raised citing Azure AI monetization trajectory.',
     source: 'Mock Research',
     timestamp: '2026-06-06T05:30:00Z',
     tickers: ['MSFT'],
@@ -179,44 +180,44 @@ export const NEWS_FEED: NewsItem[] = [
   {
     id: 'news-6',
     category: 'market',
-    headline: 'VIX proxy drops 4.8% as risk appetite improves',
-    summary: 'Volatility gauge at 13.4 — lowest level in two weeks per simulated data.',
+    headline: 'Mega Cap 7 breadth improves as risk appetite returns',
+    summary: 'Five of seven names trading above 20-day moving average per simulated data.',
     source: 'Mock Wire',
     timestamp: '2026-06-05T15:00:00Z',
-    tickers: ['VIX', 'SPY'],
+    tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA'],
     aiImpactScore: 55,
   },
   {
     id: 'news-7',
     category: 'company',
-    headline: 'AMD wins hyperscaler CPU allocation — unconfirmed',
-    summary: 'Industry blog reports expanded EPYC share at major cloud provider.',
+    headline: 'GOOGL cloud revenue beats estimates in mock preview',
+    summary: 'Industry blog reports strong AI search monetization ahead of official report.',
     source: 'Mock Terminal',
     timestamp: '2026-06-05T12:30:00Z',
-    tickers: ['AMD', 'INTC'],
+    tickers: ['GOOGL'],
     aiImpactScore: 74,
   },
   {
     id: 'news-8',
     category: 'sec_filing',
-    headline: 'COIN 10-Q: Trading volume up 22% QoQ',
-    summary: 'Quarterly filing highlights retail crypto activity rebound in mock dataset.',
+    headline: 'META 10-Q: Ad revenue up 18% QoQ',
+    summary: 'Quarterly filing highlights Reels monetization gains in mock dataset.',
     source: 'SEC (mock)',
     timestamp: '2026-06-05T09:00:00Z',
-    tickers: ['COIN'],
+    tickers: ['META'],
     aiImpactScore: 66,
   },
 ]
 
 export const NEWS_AI_SUMMARY: NewsAiSummary = {
   biggestRisk:
-    'May CPI release at 08:30 ET is the highest-impact event today — simulated portfolio beta suggests ±1.2% SPY move on a surprise.',
+    'May CPI release at 08:30 ET is the highest-impact event today — Mega Cap 7 beta suggests elevated volatility on a surprise.',
   positionImpact: [
     'NVDA — earnings after close; open paper position may see elevated implied volatility.',
     'AAPL — ex-buyback 8-K supports sentiment; earnings same session adds event risk.',
-    'AMD — hyperscaler headline unconfirmed; Mean Reversion strategy may whipsaw.',
+    'TSLA — delivery update later this week; momentum strategies may whipsaw.',
   ],
-  stocksToWatch: ['NVDA', 'AAPL', 'SPY', 'META', 'ARM'],
+  stocksToWatch: [...MEGA_CAP_7_SYMBOLS],
 }
 
 export const WEEK_DAYS = ['Mon 6', 'Tue 7', 'Wed 8', 'Thu 9', 'Fri 10']

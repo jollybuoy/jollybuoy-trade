@@ -37,12 +37,20 @@ export function getIbkrApiBaseUrl(): string | null {
   return null
 }
 
-export function getIbkrBackendMessage(error?: string | null): string {
+export function getIbkrBackendMessage(error?: string | null, errorCode?: string | null): string {
+  if (errorCode === 'user_disconnected') {
+    return 'IBKR disconnected. Connect your paper account (IB Gateway port 4002) in Settings.'
+  }
+
+  if (errorCode === 'gateway_not_running' || errorCode === 'connection_timeout' || errorCode === 'api_port_unavailable') {
+    return 'IB Gateway not reachable on port 4002. Open IB Gateway in Paper Trading mode and enable API connections.'
+  }
+
   if (error && error !== IBKR_BACKEND_NOT_CONNECTED) return error
 
   if (isNetlifyDeployment() || !isIbkrBackendConfigured()) {
     return IBKR_BACKEND_NOT_CONNECTED
   }
 
-  return 'IBKR local backend not connected. Start IB Gateway (port 4002), then run: cd trading-service && uvicorn main:app --reload --port 8000'
+  return 'Start IB Gateway (Paper, port 4002), then click Connect Paper Account in Settings.'
 }

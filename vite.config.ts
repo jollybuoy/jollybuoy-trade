@@ -16,6 +16,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/api/strategy': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/api/yahoo': {
         target: 'https://query1.finance.yahoo.com',
         changeOrigin: true,
@@ -26,6 +30,10 @@ export default defineConfig({
   preview: {
     proxy: {
       '/api/ibkr': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/api/strategy': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

@@ -4,17 +4,9 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 
 const pageTitles: Record<string, string> = {
-  '/': 'Dashboard',
   '/portfolio': 'Portfolio',
   '/watchlist': 'Watchlist',
-  '/scanner': 'Market Scanner',
   '/strategies': 'Strategies',
-  '/backtesting': 'Backtesting',
-  '/assistant': 'AI Assistant',
-  '/alerts': 'Alerts',
-  '/news': 'News & Events',
-  '/reports': 'Reports',
-  '/paper-trading': 'Paper Trading',
   '/history': 'Trade History',
   '/settings': 'Settings',
 }

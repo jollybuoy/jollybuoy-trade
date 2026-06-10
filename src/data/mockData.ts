@@ -1,3 +1,4 @@
+import { MEGA_CAP_7_STOCKS, MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import type {
   MarketIndex,
   PaperTrade,
@@ -51,37 +52,34 @@ export const portfolioHistory: PortfolioSnapshot[] = [
   { date: '2026-06-02', value: 284_750, benchmark: 262_750 },
 ]
 
-export const positions: Position[] = [
-  { symbol: 'AAPL', name: 'Apple Inc.', shares: 150, avgCost: 178.42, currentPrice: 195.87, sector: 'Technology', sparkline: [188, 190, 192, 191, 194, 196, 195.87] },
-  { symbol: 'MSFT', name: 'Microsoft Corp.', shares: 80, avgCost: 385.2, currentPrice: 412.35, sector: 'Technology', sparkline: [398, 402, 405, 408, 410, 411, 412.35] },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', shares: 45, avgCost: 680.5, currentPrice: 892.14, sector: 'Technology', sparkline: [820, 845, 860, 872, 885, 890, 892.14] },
-  { symbol: 'JPM', name: 'JPMorgan Chase', shares: 100, avgCost: 168.3, currentPrice: 198.72, sector: 'Financials', sparkline: [190, 192, 194, 196, 197, 198, 198.72] },
-  { symbol: 'V', name: 'Visa Inc.', shares: 60, avgCost: 245.8, currentPrice: 278.45, sector: 'Financials', sparkline: [268, 270, 272, 274, 276, 277, 278.45] },
-  { symbol: 'UNH', name: 'UnitedHealth Group', shares: 35, avgCost: 520.1, currentPrice: 498.32, sector: 'Healthcare', sparkline: [510, 508, 505, 502, 500, 499, 498.32] },
-  { symbol: 'XOM', name: 'Exxon Mobil', shares: 120, avgCost: 98.45, currentPrice: 112.68, sector: 'Energy', sparkline: [106, 108, 109, 110, 111, 112, 112.68] },
-]
+export const positions: Position[] = MEGA_CAP_7_SYMBOLS.map((symbol) => ({
+  symbol,
+  name: MEGA_CAP_7_STOCKS[symbol].company,
+  shares: [150, 80, 45, 60, 35, 25, 40][MEGA_CAP_7_SYMBOLS.indexOf(symbol)],
+  avgCost: [178.42, 385.2, 680.5, 168.3, 405, 480.2, 238.5][MEGA_CAP_7_SYMBOLS.indexOf(symbol)],
+  currentPrice: 0,
+  sector: MEGA_CAP_7_STOCKS[symbol].sector,
+  sparkline: [0, 0, 0, 0, 0, 0, 0],
+}))
 
-export const watchlist: WatchlistItem[] = [
-  { symbol: 'TSLA', name: 'Tesla Inc.', price: 248.92, change: 8.34, changePercent: 3.47, volume: 98_420_000 },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 186.54, change: -1.22, changePercent: -0.65, volume: 42_180_000 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 172.38, change: 2.14, changePercent: 1.26, volume: 28_650_000 },
-  { symbol: 'META', name: 'Meta Platforms', price: 512.84, change: 6.72, changePercent: 1.33, volume: 18_920_000 },
-  { symbol: 'AMD', name: 'Advanced Micro Devices', price: 168.22, change: -3.48, changePercent: -2.03, volume: 52_340_000 },
-  { symbol: 'CRM', name: 'Salesforce Inc.', price: 278.96, change: 1.84, changePercent: 0.66, volume: 8_420_000 },
-  { symbol: 'NFLX', name: 'Netflix Inc.', price: 628.45, change: 12.38, changePercent: 2.01, volume: 4_280_000 },
-  { symbol: 'COIN', name: 'Coinbase Global', price: 218.72, change: -5.62, changePercent: -2.51, volume: 12_680_000 },
-]
+export const watchlist: WatchlistItem[] = MEGA_CAP_7_SYMBOLS.map((symbol) => ({
+  symbol,
+  name: MEGA_CAP_7_STOCKS[symbol].company,
+  price: 0,
+  change: 0,
+  changePercent: 0,
+  volume: 0,
+}))
 
-export const scannerResults: ScannerResult[] = [
-  { symbol: 'SMCI', name: 'Super Micro Computer', price: 842.18, changePercent: 8.42, volume: 18_420_000, signal: 'breakout', score: 92 },
-  { symbol: 'PLTR', name: 'Palantir Technologies', price: 24.86, changePercent: 5.18, volume: 68_200_000, signal: 'momentum', score: 88 },
-  { symbol: 'SOFI', name: 'SoFi Technologies', price: 8.42, changePercent: 4.72, volume: 42_800_000, signal: 'volume_spike', score: 85 },
-  { symbol: 'RIVN', name: 'Rivian Automotive', price: 12.68, changePercent: -6.24, volume: 28_400_000, signal: 'oversold', score: 78 },
-  { symbol: 'ARM', name: 'Arm Holdings', price: 128.54, changePercent: 3.86, volume: 8_620_000, signal: 'breakout', score: 82 },
-  { symbol: 'DKNG', name: 'DraftKings Inc.', price: 42.18, changePercent: 6.12, volume: 14_280_000, signal: 'momentum', score: 79 },
-  { symbol: 'UPST', name: 'Upstart Holdings', price: 28.94, changePercent: -4.82, volume: 6_840_000, signal: 'oversold', score: 74 },
-  { symbol: 'SNOW', name: 'Snowflake Inc.', price: 168.42, changePercent: 2.94, volume: 4_280_000, signal: 'volume_spike', score: 76 },
-]
+export const scannerResults: ScannerResult[] = MEGA_CAP_7_SYMBOLS.map((symbol, index) => ({
+  symbol,
+  name: MEGA_CAP_7_STOCKS[symbol].company,
+  price: 0,
+  changePercent: 0,
+  volume: 0,
+  signal: (['breakout', 'momentum', 'volume_spike', 'oversold'] as const)[index % 4],
+  score: 92 - index * 2,
+}))
 
 export const strategies: Strategy[] = [
   {
@@ -132,9 +130,9 @@ export const strategies: Strategy[] = [
 
 export const paperTrades: PaperTrade[] = [
   { id: 'pt-1', symbol: 'TSLA', side: 'buy', quantity: 25, price: 245.18, timestamp: '2026-06-06T10:15:00Z', status: 'filled' },
-  { id: 'pt-2', symbol: 'AMD', side: 'sell', quantity: 50, price: 169.42, timestamp: '2026-06-06T09:45:00Z', status: 'filled' },
-  { id: 'pt-3', symbol: 'PLTR', side: 'buy', quantity: 200, price: 24.12, timestamp: '2026-06-06T09:30:00Z', status: 'filled' },
-  { id: 'pt-4', symbol: 'COIN', side: 'buy', quantity: 30, price: 220.0, timestamp: '2026-06-06T09:00:00Z', status: 'pending' },
+  { id: 'pt-2', symbol: 'MSFT', side: 'sell', quantity: 20, price: 408.2, timestamp: '2026-06-06T09:45:00Z', status: 'filled' },
+  { id: 'pt-3', symbol: 'AMZN', side: 'buy', quantity: 50, price: 182.4, timestamp: '2026-06-06T09:30:00Z', status: 'filled' },
+  { id: 'pt-4', symbol: 'GOOGL', side: 'buy', quantity: 30, price: 168.72, timestamp: '2026-06-06T09:00:00Z', status: 'pending' },
   { id: 'pt-5', symbol: 'NVDA', side: 'sell', quantity: 10, price: 890.0, timestamp: '2026-06-05T15:30:00Z', status: 'cancelled' },
 ]
 
@@ -148,12 +146,14 @@ export const paperAccount = {
   marginAvailable: 87_550,
 }
 
-export const paperPositions = [
-  { symbol: 'TSLA', name: 'Tesla Inc.', shares: 25, avgCost: 238.5, currentPrice: 248.92, sparkline: [240, 242, 245, 246, 247, 249, 248.92] },
-  { symbol: 'PLTR', name: 'Palantir Technologies', shares: 200, avgCost: 23.8, currentPrice: 24.86, sparkline: [23.5, 23.8, 24.0, 24.2, 24.5, 24.7, 24.86] },
-  { symbol: 'AMD', name: 'Advanced Micro Devices', shares: 50, avgCost: 172.0, currentPrice: 168.22, sparkline: [175, 173, 171, 170, 169, 168.5, 168.22] },
-  { symbol: 'COIN', name: 'Coinbase Global', shares: 30, avgCost: 215.0, currentPrice: 218.72, sparkline: [212, 214, 216, 217, 218, 219, 218.72] },
-]
+export const paperPositions = MEGA_CAP_7_SYMBOLS.slice(0, 4).map((symbol, index) => ({
+  symbol,
+  name: MEGA_CAP_7_STOCKS[symbol].company,
+  shares: [25, 10, 40, 20][index],
+  avgCost: [238.5, 850, 192.45, 405][index],
+  currentPrice: 0,
+  sparkline: [0, 0, 0, 0, 0, 0, 0],
+}))
 
 export const botStatus = {
   name: 'JollyBuoy Alpha',
@@ -177,11 +177,11 @@ export const riskControls = {
 }
 
 export const scannerStats = {
-  totalScanned: 4_832,
-  signalsFound: 28,
+  totalScanned: 7,
+  signalsFound: 7,
   avgScore: 81.4,
   lastScan: '2026-06-06T10:30:00Z',
-  topSignal: 'SMCI Breakout',
+  topSignal: 'NVDA Breakout',
 }
 
 export const tradeHistory: Trade[] = [
@@ -189,17 +189,16 @@ export const tradeHistory: Trade[] = [
   { id: 'tr-2', symbol: 'NVDA', side: 'buy', quantity: 10, price: 885.2, total: 8_852.0, timestamp: '2026-06-05T11:08:00Z', status: 'filled', strategy: 'AI Sentiment Alpha' },
   { id: 'tr-3', symbol: 'MSFT', side: 'sell', quantity: 20, price: 410.85, total: 8_217.0, timestamp: '2026-06-04T15:45:00Z', status: 'filled', strategy: 'Mean Reversion RSI' },
   { id: 'tr-4', symbol: 'TSLA', side: 'buy', quantity: 15, price: 238.92, total: 3_583.8, timestamp: '2026-06-04T10:30:00Z', status: 'filled' },
-  { id: 'tr-5', symbol: 'JPM', side: 'buy', quantity: 40, price: 196.18, total: 7_847.2, timestamp: '2026-06-03T13:15:00Z', status: 'filled', strategy: 'Sector Rotation' },
-  { id: 'tr-6', symbol: 'AMD', side: 'sell', quantity: 75, price: 172.4, total: 12_930.0, timestamp: '2026-06-03T09:52:00Z', status: 'partial' },
+  { id: 'tr-5', symbol: 'GOOGL', side: 'buy', quantity: 40, price: 168.72, total: 6_748.8, timestamp: '2026-06-03T13:15:00Z', status: 'filled', strategy: 'Sector Rotation' },
+  { id: 'tr-6', symbol: 'AMZN', side: 'sell', quantity: 75, price: 184.4, total: 13_830.0, timestamp: '2026-06-03T09:52:00Z', status: 'partial' },
   { id: 'tr-7', symbol: 'GOOGL', side: 'buy', quantity: 25, price: 168.72, total: 4_218.0, timestamp: '2026-06-02T14:00:00Z', status: 'filled', strategy: 'Momentum Breakout' },
   { id: 'tr-8', symbol: 'META', side: 'sell', quantity: 10, price: 508.24, total: 5_082.4, timestamp: '2026-06-02T11:30:00Z', status: 'cancelled' },
 ]
 
 export const sectorAllocation = [
-  { name: 'Technology', value: 58.2 },
-  { name: 'Financials', value: 18.4 },
-  { name: 'Healthcare', value: 8.6 },
-  { name: 'Energy', value: 9.8 },
+  { name: 'Technology', value: 52.4 },
+  { name: 'Communication Services', value: 24.8 },
+  { name: 'Consumer Discretionary', value: 17.8 },
   { name: 'Cash', value: 5.0 },
 ]
 

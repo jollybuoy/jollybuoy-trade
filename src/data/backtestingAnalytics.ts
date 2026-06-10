@@ -1,3 +1,4 @@
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import type { AdvancedBacktestResults } from '@/types/backtesting'
 
 export const BACKTEST_STRATEGY_OPTIONS = [
@@ -8,19 +9,7 @@ export const BACKTEST_STRATEGY_OPTIONS = [
   { id: 'strat-dividend', label: 'Dividend Capture Strategy' },
 ]
 
-export const BACKTEST_SYMBOL_OPTIONS = [
-  'AAPL',
-  'MSFT',
-  'NVDA',
-  'TSLA',
-  'GOOGL',
-  'META',
-  'AMZN',
-  'SPY',
-  'QQQ',
-  'AMD',
-  'JPM',
-]
+export const BACKTEST_SYMBOL_OPTIONS = [...MEGA_CAP_7_SYMBOLS]
 
 export const MOCK_BACKTEST_RESULTS: AdvancedBacktestResults = {
   metrics: {

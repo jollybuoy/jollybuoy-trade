@@ -1,5 +1,7 @@
 export type BrokerAccountStatus = 'connected' | 'disconnected' | 'pending'
 
+export type IbkrAccountMode = 'paper' | 'live'
+
 export interface BrokerAccount {
   status: BrokerAccountStatus
   accountId: string | null
@@ -15,7 +17,13 @@ export interface BrokerConnectionState {
   live: BrokerAccount
 }
 
+export interface BrokerSessionSettings {
+  linked: boolean
+  linkedMode: IbkrAccountMode | null
+}
+
 export interface TradingModeSettings {
+  activeMode: IbkrAccountMode
   paperModeActive: boolean
   liveModeLocked: boolean
   requireLiveConfirmation: boolean
@@ -50,6 +58,7 @@ export interface AccountSettingsState {
   subscriptionPlan: string
   apiKeyMasked: string
   broker: BrokerConnectionState
+  brokerSession: BrokerSessionSettings
   tradingMode: TradingModeSettings
   risk: RiskControlSettings
   notifications: NotificationSettings
@@ -76,9 +85,14 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettingsState = {
       lastSync: null,
     },
   },
+  brokerSession: {
+    linked: false,
+    linkedMode: null,
+  },
   tradingMode: {
+    activeMode: 'paper',
     paperModeActive: true,
-    liveModeLocked: true,
+    liveModeLocked: false,
     requireLiveConfirmation: true,
   },
   risk: {

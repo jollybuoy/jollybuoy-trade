@@ -60,7 +60,7 @@ export const DEFAULT_PAPER_ORDER: PaperOrderForm = {
   side: 'buy',
   quantity: 25,
   orderType: 'limit',
-  limitPrice: 248.92,
+  limitPrice: 0,
   stopLossPercent: 3,
   takeProfitPercent: 8,
 }

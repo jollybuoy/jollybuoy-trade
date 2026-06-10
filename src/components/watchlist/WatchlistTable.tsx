@@ -8,7 +8,7 @@ interface WatchlistTableProps {
   group: WatchlistGroup
   rows: WatchlistRow[]
   loading?: boolean
-  onAddToStrategy: (symbol: string) => void
+  onAddToStrategy?: (symbol: string) => void
 }
 
 const signalStyles: Record<ScannerSignal, { label: string; className: string }> = {
@@ -115,16 +115,18 @@ export function WatchlistTable({ group, rows, loading = false, onAddToStrategy }
                     <SignalBadge signal={row.signal} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-center">
-                      <button
-                        type="button"
-                        onClick={() => onAddToStrategy(row.symbol)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-ai/20 bg-ai/5 px-2.5 py-1.5 text-[10px] font-semibold uppercase text-ai transition-colors hover:border-ai/40 hover:bg-ai/10"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        Add to Strategy
-                      </button>
-                    </div>
+                    {onAddToStrategy ? (
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => onAddToStrategy(row.symbol)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-ai/20 bg-ai/5 px-2.5 py-1.5 text-[10px] font-semibold uppercase text-ai transition-colors hover:border-ai/40 hover:bg-ai/10"
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          Add to Strategy
+                        </button>
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))

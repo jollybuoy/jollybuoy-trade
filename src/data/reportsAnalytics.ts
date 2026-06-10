@@ -1,3 +1,4 @@
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import { REPORT_TYPE_LABELS, type RecentReport, type ReportType } from '@/types/reports'
 
 export const REPORT_TYPE_CARDS: {
@@ -52,16 +53,7 @@ export const STRATEGY_FILTER_OPTIONS = [
   { value: 'dividend_capture', label: 'Dividend Capture' },
 ]
 
-export const SYMBOL_FILTER_OPTIONS = [
-  'all',
-  'AAPL',
-  'MSFT',
-  'NVDA',
-  'TSLA',
-  'GOOGL',
-  'META',
-  'SPY',
-]
+export const SYMBOL_FILTER_OPTIONS = ['all', ...MEGA_CAP_7_SYMBOLS]
 
 export const MOCK_RECENT_REPORTS: RecentReport[] = [
   {

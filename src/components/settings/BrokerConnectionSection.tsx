@@ -1,13 +1,21 @@
-import { Link2, Lock, RefreshCw } from 'lucide-react'
+import { Link2, Lock, RefreshCw, Unlink } from 'lucide-react'
 import { TerminalCard, TerminalCardHeader } from '@/components/terminal/TerminalCard'
-import type { BrokerAccount, BrokerAccountStatus } from '@/types/settings'
+import type { BrokerAccount, BrokerAccountStatus, IbkrAccountMode } from '@/types/settings'
 import { cn } from '@/lib/utils'
 
 interface BrokerConnectionSectionProps {
   paper: BrokerAccount
   live: BrokerAccount
+  activeMode: IbkrAccountMode
   loading?: boolean
-  onRefreshPaper: () => void
+  busyMode?: IbkrAccountMode | null
+  busyAction?: 'connect' | 'disconnect' | null
+  onRefresh: () => void
+  onConnectPaper: () => void
+  onConnectLive: () => void
+  onDisconnectPaper: () => void
+  onDisconnectLive: () => void
+  liveConnectLocked?: boolean
 }
 
 const statusStyles: Record<
@@ -22,17 +30,25 @@ const statusStyles: Record<
 export function BrokerConnectionSection({
   paper,
   live,
+  activeMode,
   loading = false,
-  onRefreshPaper,
+  busyMode = null,
+  busyAction = null,
+  onRefresh,
+  onConnectPaper,
+  onConnectLive,
+  onDisconnectPaper,
+  onDisconnectLive,
+  liveConnectLocked = false,
 }: BrokerConnectionSectionProps) {
   return (
     <TerminalCard glow="ai">
       <TerminalCardHeader
         title="Broker Connection"
-        description="Interactive Brokers paper account via local IB Gateway"
+        description="Connect or disconnect IBKR Paper (port 4002) or Live (port 4001) via local IB Gateway"
         badge={
           <span className="rounded-md border border-accent/20 bg-accent/5 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent">
-            IBKR Paper Trading Mode
+            Active: {activeMode === 'paper' ? 'Paper' : 'Live'}
           </span>
         }
       />
@@ -40,18 +56,29 @@ export function BrokerConnectionSection({
       <div className="grid gap-4 sm:grid-cols-2">
         <BrokerAccountCard
           title="IBKR Paper Account"
-          subtitle="Connected through local trading-service API"
+          subtitle="Zero-risk paper trading — IB Gateway port 4002"
           account={paper}
           loading={loading}
-          onRefresh={onRefreshPaper}
-          refreshLabel="Refresh"
+          busy={busyMode === 'paper'}
+          busyAction={busyMode === 'paper' ? busyAction : null}
+          isActive={activeMode === 'paper'}
+          onRefresh={onRefresh}
+          onConnect={onConnectPaper}
+          onDisconnect={onDisconnectPaper}
+          connectLabel="Connect Paper Account"
         />
         <BrokerAccountCard
           title="IBKR Live Account"
-          subtitle="Real capital — locked until onboarding"
+          subtitle="Real capital — IB Gateway port 4001"
           account={live}
+          busy={busyMode === 'live'}
+          busyAction={busyMode === 'live' ? busyAction : null}
+          isActive={activeMode === 'live'}
+          locked={liveConnectLocked}
+          onRefresh={onRefresh}
+          onConnect={liveConnectLocked ? undefined : onConnectLive}
+          onDisconnect={onDisconnectLive}
           connectLabel="Connect Live Account"
-          locked
         />
       </div>
     </TerminalCard>
@@ -63,34 +90,52 @@ function BrokerAccountCard({
   subtitle,
   account,
   loading = false,
-  onRefresh,
-  refreshLabel = 'Refresh',
-  connectLabel,
+  busy = false,
+  busyAction = null,
+  isActive = false,
   locked = false,
+  onRefresh,
+  onConnect,
+  onDisconnect,
+  connectLabel = 'Connect',
 }: {
   title: string
   subtitle: string
   account: BrokerAccount
   loading?: boolean
-  onRefresh?: () => void
-  refreshLabel?: string
-  connectLabel?: string
+  busy?: boolean
+  busyAction?: 'connect' | 'disconnect' | null
+  isActive?: boolean
   locked?: boolean
+  onRefresh?: () => void
+  onConnect?: () => void
+  onDisconnect?: () => void
+  connectLabel?: string
 }) {
   const status = statusStyles[account.status]
+  const isConnected = account.status === 'connected'
 
   return (
     <div
       className={cn(
         'rounded-lg border p-4',
-        locked ? 'border-border-subtle bg-surface/30 opacity-90' : 'border-ai/20 bg-ai/5',
+        isConnected
+          ? 'border-accent/30 bg-accent/5'
+          : isActive
+            ? 'border-accent/20 bg-accent/5'
+            : 'border-ai/20 bg-ai/5',
+        locked && !isConnected && 'opacity-90',
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-text-primary">{title}</p>
-            {locked && <Lock className="h-3.5 w-3.5 text-text-muted" />}
+            {isActive && isConnected && (
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[9px] font-semibold uppercase text-accent">
+                Active Session
+              </span>
+            )}
           </div>
           <p className="mt-0.5 text-[10px] text-text-muted">{subtitle}</p>
         </div>
@@ -110,14 +155,6 @@ function BrokerAccountCard({
           <span className="font-mono text-text-primary">{account.accountId ?? '—'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-text-muted">Mode</span>
-          <span className="font-mono capitalize text-text-secondary">{account.mode ?? '—'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-text-muted">Host</span>
-          <span className="font-mono text-text-secondary">{account.host ?? '—'}</span>
-        </div>
-        <div className="flex justify-between">
           <span className="text-text-muted">Port</span>
           <span className="font-mono text-text-secondary">{account.port ?? '—'}</span>
         </div>
@@ -129,34 +166,54 @@ function BrokerAccountCard({
         </div>
       </div>
 
-      {account.status === 'disconnected' && account.errorMessage && !locked && (
+      {account.status === 'disconnected' && account.errorMessage && (
         <p className="mt-3 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
           {account.errorMessage}
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {!locked && (
+        {isConnected && onDisconnect && (
           <button
             type="button"
-            onClick={onRefresh}
-            disabled={loading || account.status === 'pending'}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-muted disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onDisconnect}
+            disabled={busy || loading}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-semibold text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-            {loading || account.status === 'pending' ? 'Checking…' : refreshLabel}
+            <Unlink className={cn('h-3.5 w-3.5', busy && busyAction === 'disconnect' && 'animate-pulse')} />
+            {busy && busyAction === 'disconnect' ? 'Disconnecting…' : 'Disconnect'}
           </button>
         )}
 
-        {locked && (
+        {!isConnected && onConnect && !locked && (
           <button
             type="button"
-            disabled
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-medium text-text-muted"
+            onClick={onConnect}
+            disabled={busy || loading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Link2 className="h-3.5 w-3.5" />
-            {connectLabel}
+            <Link2 className={cn('h-3.5 w-3.5', busy && busyAction === 'connect' && 'animate-pulse')} />
+            {busy && busyAction === 'connect' ? 'Connecting…' : connectLabel}
           </button>
+        )}
+
+        {isConnected && onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading || busy}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+            Refresh
+          </button>
+        )}
+
+        {!isConnected && locked && !onConnect && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs text-text-muted">
+            <Lock className="h-3.5 w-3.5" />
+            Enable live connection in Trading Mode below
+          </span>
         )}
       </div>
     </div>

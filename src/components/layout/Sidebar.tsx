@@ -1,35 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import {
-  LayoutDashboard,
-  Briefcase,
-  Eye,
-  Radar,
-  BrainCircuit,
-  Bot,
-  LineChart,
-  FlaskConical,
-  History,
-  BellRing,
-  Newspaper,
-  FileBarChart,
-  Settings,
-  Anchor,
-  X,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Briefcase, Eye, BrainCircuit, History, Settings, Anchor, X } from 'lucide-react'
+import { useIbkrData } from '@/hooks/useIbkrData'
+import { cn, formatCurrency } from '@/lib/utils'
 
 const navItems = [
-  { label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { label: 'Portfolio', path: '/portfolio', icon: Briefcase },
   { label: 'Watchlist', path: '/watchlist', icon: Eye },
-  { label: 'Market Scanner', path: '/scanner', icon: Radar },
   { label: 'Strategies', path: '/strategies', icon: BrainCircuit },
-  { label: 'Backtesting', path: '/backtesting', icon: LineChart },
-  { label: 'AI Assistant', path: '/assistant', icon: Bot },
-  { label: 'Alerts', path: '/alerts', icon: BellRing },
-  { label: 'News & Events', path: '/news', icon: Newspaper },
-  { label: 'Reports', path: '/reports', icon: FileBarChart },
-  { label: 'Paper Trading', path: '/paper-trading', icon: FlaskConical },
   { label: 'Trade History', path: '/history', icon: History },
   { label: 'Settings', path: '/settings', icon: Settings },
 ]
@@ -40,6 +17,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { account, connected, loading } = useIbkrData()
+
+  const equity = connected && account ? account.netLiquidation : null
+  const dayPnL = connected && account ? account.realizedPnL + account.unrealizedPnL : null
+
   return (
     <>
       {isOpen && (
@@ -83,7 +65,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === '/'}
               onClick={onClose}
               className={({ isActive }) =>
                 cn(
@@ -103,10 +84,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="border-t border-border-subtle p-4">
           <div className="terminal-glow rounded-lg border border-accent/20 bg-accent/5 p-3">
             <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted">
-              Paper Account
+              {connected ? 'Connected Account' : 'Account'}
             </p>
-            <p className="mt-1 font-mono text-lg font-bold text-accent">$108,420.50</p>
-            <p className="mt-0.5 text-xs text-accent/70">+$842.18 today</p>
+            {loading && !equity ? (
+              <p className="mt-1 text-xs text-text-muted">Connecting…</p>
+            ) : equity !== null ? (
+              <>
+                <p className="mt-1 font-mono text-lg font-bold text-accent">
+                  {formatCurrency(equity)}
+                </p>
+                <p
+                  className={cn(
+                    'mt-0.5 text-xs font-mono',
+                    (dayPnL ?? 0) >= 0 ? 'text-accent/70' : 'text-danger/70',
+                  )}
+                >
+                  {(dayPnL ?? 0) >= 0 ? '+' : ''}
+                  {formatCurrency(dayPnL ?? 0)} session P/L
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-text-muted">Connect IBKR in Settings</p>
+            )}
           </div>
         </div>
       </aside>

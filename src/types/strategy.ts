@@ -18,12 +18,15 @@ export type ExecutionMode = 'paper' | 'live'
 export interface DeployedStrategy {
   id: string
   name: string
+  description: string
   status: StrategyStatus
   mode: ExecutionMode
   winRate: number
   totalPnL: number
   maxDrawdown: number
   riskLevel: RiskLevel
+  symbols: string[]
+  tradesPerDay: string
 }
 
 export interface CreateStrategyForm {

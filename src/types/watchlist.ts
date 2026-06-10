@@ -1,12 +1,6 @@
 import type { ScannerSignal } from '@/types/scanner'
 
-export type WatchlistGroupId =
-  | 'ai-growth'
-  | 'semiconductor'
-  | 'magnificent-7'
-  | 'high-momentum'
-  | 'dividend'
-  | 'custom'
+export type WatchlistGroupId = 'mega-cap-7'
 
 export interface WatchlistGroup {
   id: WatchlistGroupId
@@ -49,7 +43,7 @@ export interface WatchlistAlertSettings {
 
 export const DEFAULT_ADD_SYMBOL_FORM: AddSymbolForm = {
   symbol: '',
-  watchlistId: 'custom',
+  watchlistId: 'mega-cap-7',
   notes: '',
   targetBuyPrice: '',
   targetSellPrice: '',

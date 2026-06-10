@@ -4,17 +4,11 @@ import type { OHLCBar, Quote } from '@/services/market/types'
 const QUOTE_SEEDS: Record<string, Omit<Quote, 'symbol' | 'asOf'>> = {
   AAPL: { currentPrice: 195.87, previousClose: 193.46, dailyChange: 2.41, dailyChangePercent: 1.24, volume: 58_420_000, marketCap: 3_020_000_000_000 },
   MSFT: { currentPrice: 412.35, previousClose: 408.73, dailyChange: 3.62, dailyChangePercent: 0.88, volume: 22_180_000, marketCap: 3_060_000_000_000 },
-  NVDA: { currentPrice: 892.14, previousClose: 873.1, dailyChange: 19.04, dailyChangePercent: 2.18, volume: 42_800_000, marketCap: 2_200_000_000_000 },
-  TSLA: { currentPrice: 248.92, previousClose: 240.58, dailyChange: 8.34, dailyChangePercent: 3.47, volume: 98_420_000, marketCap: 792_000_000_000 },
   GOOGL: { currentPrice: 172.38, previousClose: 170.24, dailyChange: 2.14, dailyChangePercent: 1.26, volume: 28_650_000, marketCap: 2_140_000_000_000 },
-  GOOG: { currentPrice: 171.92, previousClose: 169.88, dailyChange: 2.04, dailyChangePercent: 1.2, volume: 18_400_000, marketCap: 2_100_000_000_000 },
-  META: { currentPrice: 512.84, previousClose: 506.12, dailyChange: 6.72, dailyChangePercent: 1.33, volume: 18_920_000, marketCap: 1_310_000_000_000 },
   AMZN: { currentPrice: 186.54, previousClose: 187.76, dailyChange: -1.22, dailyChangePercent: -0.65, volume: 42_180_000, marketCap: 1_940_000_000_000 },
-  AMD: { currentPrice: 168.22, previousClose: 171.7, dailyChange: -3.48, dailyChangePercent: -2.03, volume: 52_340_000, marketCap: 272_000_000_000 },
-  PLTR: { currentPrice: 24.18, previousClose: 23.52, dailyChange: 0.66, dailyChangePercent: 2.81, volume: 38_200_000, marketCap: 52_000_000_000 },
-  AVGO: { currentPrice: 168.4, previousClose: 165.2, dailyChange: 3.2, dailyChangePercent: 1.94, volume: 12_800_000, marketCap: 780_000_000_000 },
-  SPY: { currentPrice: 523.42, previousClose: 519.2, dailyChange: 4.22, dailyChangePercent: 0.81, volume: 72_000_000, marketCap: 0 },
-  QQQ: { currentPrice: 448.18, previousClose: 444.74, dailyChange: 3.44, dailyChangePercent: 0.77, volume: 38_000_000, marketCap: 0 },
+  NVDA: { currentPrice: 892.14, previousClose: 873.1, dailyChange: 19.04, dailyChangePercent: 2.18, volume: 42_800_000, marketCap: 2_200_000_000_000 },
+  META: { currentPrice: 512.84, previousClose: 506.12, dailyChange: 6.72, dailyChangePercent: 1.33, volume: 18_920_000, marketCap: 1_310_000_000_000 },
+  TSLA: { currentPrice: 248.92, previousClose: 240.58, dailyChange: 8.34, dailyChangePercent: 3.47, volume: 98_420_000, marketCap: 792_000_000_000 },
 }
 
 function pseudoPrice(symbol: string, dayOffset: number, base: number): number {

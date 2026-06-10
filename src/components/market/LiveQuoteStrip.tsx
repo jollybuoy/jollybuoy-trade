@@ -1,9 +1,10 @@
 import { Activity } from 'lucide-react'
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
 import { MarketDataBanner } from '@/components/market/MarketDataBanner'
 import { useMarketQuotes } from '@/hooks/useMarketQuotes'
 import { cn, formatCurrency, formatPercent, getChangeColor } from '@/lib/utils'
 
-export const DASHBOARD_LIVE_SYMBOLS = ['NVDA', 'AMD', 'PLTR', 'AVGO', 'MSFT', 'GOOG'] as const
+export const DASHBOARD_LIVE_SYMBOLS = MEGA_CAP_7_SYMBOLS
 
 interface LiveQuoteStripProps {
   symbols?: readonly string[]
@@ -30,7 +31,7 @@ export function LiveQuoteStrip({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-md border border-warning/20 bg-warning/5 px-2 py-0.5 text-[10px] font-semibold uppercase text-warning">
-          Demo market data
+          Demo market data · Mega Cap 7 US
         </span>
         {!hasLiveQuotes && !loading && (
           <span className="text-[10px] text-text-muted">

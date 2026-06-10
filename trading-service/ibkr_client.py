@@ -1,25 +1,16 @@
 from __future__ import annotations
 
-import os
-import threading
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, TypeVar
 
-from ib_insync import IB
+from ib_insync import IB, MarketOrder, Stock
 
-HOST = os.getenv("IBKR_HOST", "127.0.0.1")
-PORT = int(os.getenv("IBKR_PORT", "4002"))
-CLIENT_ID = int(os.getenv("IBKR_CLIENT_ID", "10"))
-MODE = os.getenv("IBKR_MODE", "paper")
-CONNECT_TIMEOUT = int(os.getenv("IBKR_CONNECT_TIMEOUT", "10"))
-
-LOGIN_EXPIRED_CODES = {504, 1100, 1101, 1102, 10197}
-READONLY_ERROR_CODES = {321, 103, 104}
+from ibkr_connection_manager import (
+    HOST,
+    MODE_PORTS,
+    get_manager,
+)
 
 T = TypeVar("T")
-
-_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ibkr-client")
-_ib_lock = threading.Lock()
 
 
 class IbkrServiceError(Exception):
@@ -30,84 +21,175 @@ class IbkrServiceError(Exception):
         super().__init__(message)
 
 
-class IbkrClient:
-    def __init__(self) -> None:
-        self._ib = IB()
-        self._session_error: str | None = None
-        self._error_handler_registered = False
-
-    def _ensure_error_handler(self) -> None:
-        if self._error_handler_registered:
-            return
-
-        def on_error(_req_id: int, error_code: int, error_string: str, _contract: Any) -> None:
-            if error_code in LOGIN_EXPIRED_CODES:
-                self._session_error = f"{error_code}: {error_string}"
-            if error_code in READONLY_ERROR_CODES and "read-only" in error_string.lower():
-                self._session_error = f"{error_code}: {error_string}"
-
-        self._ib.errorEvent += on_error
-        self._error_handler_registered = True
-
-    def connect(self) -> IB:
-        self._session_error = None
-        self._ensure_error_handler()
-
-        if self._ib.isConnected():
-            return self._ib
-
-        try:
-            self._ib.connect(HOST, PORT, clientId=CLIENT_ID, timeout=CONNECT_TIMEOUT)
-        except Exception as exc:  # noqa: BLE001
-            raise map_connect_error(exc) from exc
-
-        if self._session_error:
-            if "read-only" in self._session_error.lower():
-                raise IbkrServiceError("read_only_mode", self._session_error, 503)
-            raise IbkrServiceError("not_logged_in", self._session_error, 503)
-
-        return self._ib
-
-    def disconnect(self) -> None:
-        if self._ib.isConnected():
-            self._ib.disconnect()
-
-    def run(self, operation: Callable[[IB], T]) -> T:
-        with _ib_lock:
-            ib = self.connect()
-            return operation(ib)
-
-
-_client = IbkrClient()
+def _manager():
+    return get_manager()
 
 
 def run_ibkr_operation(operation: Callable[[IB], T]) -> T:
-    def task() -> T:
-        import asyncio
-
-        try:
-            asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        return _client.run(operation)
-
-    future = _executor.submit(task)
     try:
-        return future.result(timeout=CONNECT_TIMEOUT + 30)
+        return _manager().run(operation)
+    except RuntimeError as exc:
+        message = str(exc)
+        if "Connect in Settings" in message:
+            raise IbkrServiceError("user_disconnected", message, 503) from exc
+        raise IbkrServiceError("disconnected", message, 503) from exc
     except IbkrServiceError:
         raise
     except Exception as exc:  # noqa: BLE001
-        cause = exc.__cause__ or exc
-        if isinstance(cause, IbkrServiceError):
-            raise cause from exc
-        raise map_connect_error(cause) from exc
+        raise map_connect_error(exc) from exc
 
 
 def disconnect_ib() -> None:
-    future = _executor.submit(_client.disconnect)
-    future.result(timeout=10)
+    _manager().shutdown()
+
+
+def disconnected_status_payload() -> dict[str, Any]:
+    manager = _manager()
+    return {
+        "connected": False,
+        "clientId": manager.client_id,
+        "account": None,
+        "lastHeartbeat": None,
+        "mode": manager.mode,
+        "host": manager.host,
+        "port": manager.port,
+        "error": "Account disconnected. Click Connect in Settings.",
+        "errorCode": "user_disconnected",
+    }
+
+
+def disconnect_session() -> dict[str, Any]:
+    _manager().disable_session()
+    return disconnected_status_payload()
+
+
+def configure_connection_mode(mode: str) -> dict[str, Any]:
+    normalized = mode.lower().strip()
+    if normalized not in MODE_PORTS:
+        raise IbkrServiceError("invalid_mode", f"Unsupported mode: {mode}", 400)
+
+    manager = _manager()
+    try:
+        manager.enable_session(normalized)
+    except Exception as exc:  # noqa: BLE001
+        raise map_connect_error(exc) from exc
+
+    status = manager.status_payload()
+    if not status.get("connected"):
+        error = status.get("error") or "Failed to connect to IB Gateway."
+        raise IbkrServiceError(status.get("errorCode", "connection_failed"), error, 503)
+
+    return status
+
+
+def get_heartbeat_payload() -> dict[str, Any]:
+    return _manager().heartbeat_payload()
+
+
+def get_status_payload() -> dict[str, Any]:
+    return _manager().status_payload()
+
+
+def build_executions_payload(ib: IB, account_id: str) -> list[dict[str, Any]]:
+    ib.reqExecutions()
+    ib.sleep(1.5)
+
+    payload: list[dict[str, Any]] = []
+    seen_exec_ids: set[str] = set()
+
+    for fill in ib.fills():
+        execution = fill.execution
+        if execution.acctNumber and execution.acctNumber != account_id:
+            continue
+        if execution.execId in seen_exec_ids:
+            continue
+        seen_exec_ids.add(execution.execId)
+
+        contract = fill.contract
+        commission = 0.0
+        if fill.commissionReport and fill.commissionReport.commission:
+            try:
+                commission = float(fill.commissionReport.commission)
+            except (TypeError, ValueError):
+                commission = 0.0
+
+        timestamp = execution.time
+        if hasattr(timestamp, "isoformat"):
+            timestamp_str = timestamp.isoformat()
+        else:
+            timestamp_str = str(timestamp)
+
+        payload.append(
+            {
+                "execId": execution.execId,
+                "orderId": int(execution.orderId or 0),
+                "symbol": contract.symbol,
+                "side": execution.side,
+                "quantity": float(execution.shares),
+                "price": float(execution.price),
+                "avgPrice": float(execution.avgPrice or execution.price),
+                "timestamp": timestamp_str,
+                "exchange": execution.exchange,
+                "commission": commission,
+            }
+        )
+
+    payload.sort(key=lambda item: item["timestamp"], reverse=True)
+    return payload
+
+
+def get_executions_response() -> list[dict[str, Any]]:
+    def operation(ib: IB) -> list[dict[str, Any]]:
+        account_id = get_primary_account(ib)
+        return build_executions_payload(ib, account_id)
+
+    return run_ibkr_operation(operation)
+
+
+def place_market_order(symbol: str, action: str, quantity: float) -> dict[str, Any]:
+    normalized_symbol = symbol.upper().strip()
+    normalized_action = action.upper().strip()
+    if normalized_action not in {"BUY", "SELL"}:
+        raise IbkrServiceError("invalid_action", "Action must be BUY or SELL", 400)
+    if quantity <= 0:
+        raise IbkrServiceError("invalid_quantity", "Quantity must be greater than zero", 400)
+
+    mega_cap_7 = {"AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"}
+    if normalized_symbol not in mega_cap_7:
+        raise IbkrServiceError("invalid_symbol", "Only Mega Cap 7 US symbols are supported", 400)
+
+    manager = _manager()
+
+    def operation(ib: IB) -> dict[str, Any]:
+        get_primary_account(ib)
+        contract = Stock(normalized_symbol, "SMART", "USD")
+        qualified = ib.qualifyContracts(contract)
+        if not qualified:
+            raise IbkrServiceError("invalid_contract", f"Could not qualify {normalized_symbol}", 400)
+
+        order = MarketOrder(normalized_action, quantity)
+        order.tif = "DAY"
+        order.outsideRth = False
+        order.transmit = True
+
+        trade = ib.placeOrder(qualified[0], order)
+        ib.sleep(1)
+
+        status = trade.orderStatus
+        return {
+            "orderId": int(trade.order.orderId or 0),
+            "symbol": normalized_symbol,
+            "action": normalized_action,
+            "quantity": float(quantity),
+            "orderType": "MKT",
+            "status": status.status,
+            "filled": float(status.filled),
+            "remaining": float(status.remaining),
+            "avgFillPrice": float(status.avgFillPrice or 0),
+            "mode": manager.mode,
+        }
+
+    return run_ibkr_operation(operation)
 
 
 def map_connect_error(exc: BaseException) -> IbkrServiceError:
@@ -155,9 +237,17 @@ def map_connect_error(exc: BaseException) -> IbkrServiceError:
             503,
         )
 
+    if "326" in message or "client id" in message or "already in use" in message:
+        return IbkrServiceError(
+            "client_id_in_use",
+            "IB Gateway client ID is already in use. Close other API connections or restart the trading service.",
+            503,
+        )
+
+    detail = str(exc).strip() or f"{type(exc).__name__} (no detail)"
     return IbkrServiceError(
         "connection_failed",
-        f"Failed to connect to IB Gateway: {exc}",
+        f"Failed to connect to IB Gateway: {detail}",
         503,
     )
 
@@ -271,23 +361,11 @@ def build_open_orders_payload(ib: IB) -> list[dict[str, Any]]:
     return payload
 
 
-def get_status_payload() -> dict[str, Any]:
-    def operation(ib: IB) -> dict[str, Any]:
-        account_id = get_primary_account(ib)
-        return {
-            "connected": True,
-            "account": account_id,
-            "mode": MODE,
-            "host": HOST,
-            "port": PORT,
-        }
-
-    return run_ibkr_operation(operation)
-
-
 def get_account_response() -> dict[str, Any]:
     def operation(ib: IB) -> dict[str, Any]:
         account_id = get_primary_account(ib)
+        ib.reqAccountSummary()
+        ib.sleep(0.5)
         return build_account_payload(ib, account_id)
 
     return run_ibkr_operation(operation)
@@ -296,6 +374,8 @@ def get_account_response() -> dict[str, Any]:
 def get_positions_response() -> list[dict[str, Any]]:
     def operation(ib: IB) -> list[dict[str, Any]]:
         account_id = get_primary_account(ib)
+        ib.reqPositions()
+        ib.sleep(0.5)
         return build_positions_payload(ib, account_id)
 
     return run_ibkr_operation(operation)
@@ -304,6 +384,59 @@ def get_positions_response() -> list[dict[str, Any]]:
 def get_open_orders_response() -> list[dict[str, Any]]:
     def operation(ib: IB) -> list[dict[str, Any]]:
         get_primary_account(ib)
+        ib.reqOpenOrders()
+        ib.sleep(0.5)
         return build_open_orders_payload(ib)
+
+    return run_ibkr_operation(operation)
+
+
+def cancel_all_open_orders() -> dict[str, Any]:
+    skip_statuses = {"Filled", "Cancelled", "Inactive", "ApiCancelled", "PendingCancel"}
+
+    def operation(ib: IB) -> dict[str, Any]:
+        get_primary_account(ib)
+        ib.reqOpenOrders()
+        ib.sleep(1)
+
+        cancelled: list[dict[str, Any]] = []
+        failed: list[dict[str, Any]] = []
+
+        for trade in ib.openTrades():
+            order = trade.order
+            status = trade.orderStatus.status
+            if status in skip_statuses:
+                continue
+
+            try:
+                ib.cancelOrder(order)
+                cancelled.append(
+                    {
+                        "orderId": int(order.orderId or 0),
+                        "symbol": trade.contract.symbol,
+                        "action": order.action,
+                        "quantity": float(order.totalQuantity),
+                        "previousStatus": status,
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001
+                failed.append(
+                    {
+                        "orderId": int(order.orderId or 0),
+                        "symbol": trade.contract.symbol,
+                        "previousStatus": status,
+                        "error": str(exc),
+                    }
+                )
+
+        if cancelled:
+            ib.sleep(2)
+
+        return {
+            "cancelledCount": len(cancelled),
+            "failedCount": len(failed),
+            "cancelled": cancelled,
+            "failed": failed,
+        }
 
     return run_ibkr_operation(operation)

@@ -65,7 +65,7 @@ export function MarketScannerPage() {
     <div className="terminal-grid space-y-6">
       <PageHeader
         title="Market Scanner"
-        description="AI-powered multi-factor scan across 4,800+ symbols"
+        description="Mega Cap 7 US universe — live Yahoo Finance quotes for AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA"
         action={
           <button
             type="button"

@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
 import { TerminalCard, TerminalCardHeader } from '@/components/terminal/TerminalCard'
 import { SYMBOL_OPTIONS } from '@/data/paperTrading'
+import { useMarketQuotes } from '@/hooks/useMarketQuotes'
 import type { PaperOrderForm, PaperOrderSide, PaperOrderType } from '@/types/paperTrading'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 
 interface PaperOrderTicketProps {
   form: PaperOrderForm
@@ -23,7 +25,19 @@ export function PaperOrderTicket({
     onChange({ ...form, [key]: value })
   }
 
-  const estTotal = form.quantity * form.limitPrice
+  const { quotesBySymbol } = useMarketQuotes([form.symbol], { refreshIntervalMs: 60_000 })
+  const liveQuote = quotesBySymbol.get(form.symbol.toUpperCase())
+
+  useEffect(() => {
+    if (!liveQuote?.currentPrice || form.limitPrice !== 0) return
+    onChange({ ...form, limitPrice: Number(liveQuote.currentPrice.toFixed(2)) })
+  }, [form.symbol, liveQuote?.currentPrice, form.limitPrice, form, onChange])
+
+  const handleSymbolChange = (symbol: string) => {
+    onChange({ ...form, symbol, limitPrice: 0 })
+  }
+
+  const estTotal = form.quantity * (form.orderType === 'market' ? (liveQuote?.currentPrice ?? form.limitPrice) : form.limitPrice)
 
   return (
     <TerminalCard glow="ai">
@@ -36,7 +50,7 @@ export function PaperOrderTicket({
         <Field label="Symbol">
           <select
             value={form.symbol}
-            onChange={(e) => update('symbol', e.target.value)}
+            onChange={(e) => handleSymbolChange(e.target.value)}
             className={inputClass}
           >
             {SYMBOL_OPTIONS.map((s) => (
@@ -46,6 +60,28 @@ export function PaperOrderTicket({
             ))}
           </select>
         </Field>
+
+        {liveQuote && (
+          <div className="rounded-lg border border-border-subtle bg-surface/40 px-3 py-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-text-muted">Live {form.symbol}</span>
+              <span className="font-mono font-semibold text-text-primary">
+                {formatCurrency(liveQuote.currentPrice)}
+              </span>
+            </div>
+            <div className="mt-1 flex justify-between">
+              <span className="text-text-muted">Day change</span>
+              <span
+                className={cn(
+                  'font-mono font-medium',
+                  liveQuote.dailyChangePercent >= 0 ? 'text-accent' : 'text-danger',
+                )}
+              >
+                {formatPercent(liveQuote.dailyChangePercent)}
+              </span>
+            </div>
+          </div>
+        )}
 
         <Field label="Side">
           <div className="grid grid-cols-2 gap-2">

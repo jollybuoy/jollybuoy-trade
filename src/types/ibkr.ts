@@ -1,6 +1,8 @@
 export interface IbkrStatus {
   connected: boolean
   account: string | null
+  clientId?: number
+  lastHeartbeat?: string | null
   mode: 'paper' | 'live' | string
   host: string
   port: number
@@ -45,3 +47,18 @@ export interface IbkrOpenOrder {
   filled: number
   remaining: number
 }
+
+export interface IbkrExecution {
+  execId: string
+  orderId: number
+  symbol: string
+  side: string
+  quantity: number
+  price: number
+  avgPrice: number
+  timestamp: string
+  exchange: string
+  commission: number
+}
+
+export type IbkrAccountMode = 'paper' | 'live'

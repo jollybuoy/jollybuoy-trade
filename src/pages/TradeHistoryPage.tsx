@@ -1,71 +1,59 @@
-import { useMemo, useState } from 'react'
-import { Download, FileText } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { TradeAnalyticsCards } from '@/components/trade-history/TradeAnalyticsCards'
-import { TradeHistoryFiltersPanel } from '@/components/trade-history/TradeHistoryFiltersPanel'
-import { TradeHistoryTable } from '@/components/trade-history/TradeHistoryTable'
-import { TradeAnalyticsCharts } from '@/components/trade-history/TradeAnalyticsCharts'
-import {
-  DAILY_PNL,
-  STRATEGY_PERFORMANCE,
-  TRADE_HISTORY_RECORDS,
-} from '@/data/tradeHistoryAnalytics'
-import { DEFAULT_TRADE_FILTERS } from '@/types/tradeHistory'
-import type { TradeHistoryFilters } from '@/types/tradeHistory'
-import { computeAnalytics, filterTrades } from '@/lib/tradeHistoryUtils'
+import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
+import { AccountPnLSummary } from '@/components/trade-history/AccountPnLSummary'
+import { PendingOrdersTable } from '@/components/trade-history/PendingOrdersTable'
+import { ExecutedOrdersTable } from '@/components/trade-history/ExecutedOrdersTable'
+import { useIbkrData } from '@/hooks/useIbkrData'
 
 export function TradeHistoryPage() {
-  const [filters, setFilters] = useState<TradeHistoryFilters>(DEFAULT_TRADE_FILTERS)
-
-  const filteredTrades = useMemo(
-    () => filterTrades(TRADE_HISTORY_RECORDS, filters),
-    [filters],
-  )
-
-  const analytics = useMemo(() => computeAnalytics(filteredTrades), [filteredTrades])
+  const {
+    account,
+    openOrders,
+    executions,
+    loading,
+    error,
+    connected,
+    lastUpdated,
+    refresh,
+  } = useIbkrData()
 
   return (
     <div className="terminal-grid space-y-6">
       <PageHeader
-        title="Trade History & Analytics"
-        description="Review executions, measure performance, and analyze strategy results"
+        title="Trade History"
+        description="Live pending orders, executed fills, and P/L from your connected IBKR account"
         action={
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-ai/30 bg-ai/10 px-4 py-2 text-sm font-medium text-ai transition-colors hover:bg-ai/20"
-            >
-              <FileText className="h-4 w-4" />
-              Export PDF
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-ai/30 bg-ai/10 px-4 py-2 text-sm font-medium text-ai transition-colors hover:bg-ai/20 disabled:opacity-50"
+          >
+            <RefreshCw className={loading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            Refresh
+          </button>
         }
       />
 
-      <TradeAnalyticsCards analytics={analytics} />
-
-      <TradeAnalyticsCharts
-        dailyPnL={DAILY_PNL}
-        winningTrades={analytics.winningTrades}
-        losingTrades={analytics.losingTrades}
-        strategyPerformance={STRATEGY_PERFORMANCE}
+      <IbkrBackendBanner
+        loading={loading}
+        error={error}
+        connected={connected}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
       />
 
-      <div className="grid gap-6 xl:grid-cols-4">
-        <div className="xl:col-span-1">
-          <TradeHistoryFiltersPanel filters={filters} onChange={setFilters} />
-        </div>
-        <div className="xl:col-span-3">
-          <TradeHistoryTable trades={filteredTrades} />
-        </div>
-      </div>
+      <AccountPnLSummary
+        account={account}
+        pendingCount={openOrders.length}
+        executedCount={executions.length}
+        connected={connected}
+      />
+
+      <PendingOrdersTable orders={openOrders} loading={loading && !connected} />
+
+      <ExecutedOrdersTable executions={executions} loading={loading && !connected} />
     </div>
   )
 }

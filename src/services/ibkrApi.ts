@@ -1,5 +1,7 @@
 import type {
   IbkrAccount,
+  IbkrAccountMode,
+  IbkrExecution,
   IbkrOpenOrder,
   IbkrPosition,
   IbkrStatus,
@@ -12,6 +14,7 @@ import {
 } from '@/services/ibkrEnv'
 
 const REQUEST_TIMEOUT_MS = 8_000
+const CONNECT_TIMEOUT_MS = 45_000
 
 export class IbkrApiError extends Error {
   readonly status?: number
@@ -44,7 +47,11 @@ async function parseError(response: Response): Promise<string> {
   }
 }
 
-async function safeRequest<T>(path: string): Promise<{ data?: T; error?: string }> {
+async function safeRequest<T>(
+  path: string,
+  init?: RequestInit,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<{ data?: T; error?: string; status?: number }> {
   if (!isIbkrBackendConfigured()) {
     return { error: IBKR_BACKEND_NOT_CONNECTED }
   }
@@ -56,13 +63,13 @@ async function safeRequest<T>(path: string): Promise<{ data?: T; error?: string 
 
   const url = baseUrl ? `${baseUrl}${path}` : path
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, { ...init, signal: controller.signal })
 
     if (!response.ok) {
-      return { error: await parseError(response) }
+      return { error: await parseError(response), status: response.status }
     }
 
     return { data: (await response.json()) as T }
@@ -82,6 +89,28 @@ export async function getIbkrStatus(): Promise<IbkrStatus> {
   return disconnectedStatus(getIbkrBackendMessage(result.error))
 }
 
+export async function connectIbkrAccount(mode: IbkrAccountMode): Promise<IbkrStatus> {
+  const result = await safeRequest<IbkrStatus>(
+    '/api/ibkr/connect',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    },
+    CONNECT_TIMEOUT_MS,
+  )
+  if (result.data) return result.data
+  throw new IbkrApiError(getIbkrBackendMessage(result.error), result.status)
+}
+
+export async function disconnectIbkrAccount(): Promise<IbkrStatus> {
+  const result = await safeRequest<IbkrStatus>('/api/ibkr/disconnect', {
+    method: 'POST',
+  })
+  if (result.data) return result.data
+  throw new IbkrApiError(getIbkrBackendMessage(result.error), result.status)
+}
+
 export async function getIbkrAccount(): Promise<IbkrAccount | null> {
   const result = await safeRequest<IbkrAccount>('/api/ibkr/account')
   return result.data ?? null
@@ -95,6 +124,29 @@ export async function getIbkrPositions(): Promise<IbkrPosition[]> {
 export async function getIbkrOpenOrders(): Promise<IbkrOpenOrder[]> {
   const result = await safeRequest<IbkrOpenOrder[]>('/api/ibkr/open-orders')
   return result.data ?? []
+}
+
+export async function getIbkrExecutions(): Promise<IbkrExecution[]> {
+  const result = await safeRequest<IbkrExecution[]>('/api/ibkr/executions')
+  return result.data ?? []
+}
+
+export async function placeIbkrMarketOrder(
+  symbol: string,
+  action: 'BUY' | 'SELL',
+  quantity: number,
+): Promise<{ orderId: number; status: string; avgFillPrice: number }> {
+  const result = await safeRequest<{
+    orderId: number
+    status: string
+    avgFillPrice: number
+  }>('/api/ibkr/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, action, quantity }),
+  })
+  if (result.data) return result.data
+  throw new IbkrApiError(getIbkrBackendMessage(result.error), result.status)
 }
 
 export { getIbkrApiBaseUrl, isIbkrBackendConfigured }

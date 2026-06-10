@@ -47,11 +47,14 @@ function StrategyCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold text-text-primary">{strategy.name}</h3>
+          {'description' in strategy && strategy.description && (
+            <p className="mt-1 text-[11px] leading-relaxed text-text-muted">{strategy.description}</p>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusPill status={strategy.status} />
             <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/10 px-2 py-0.5 text-[10px] font-medium text-info">
               <FlaskConical className="h-3 w-3" />
-              Paper Trading
+              {strategy.mode === 'live' ? 'Live Trading' : 'Paper Trading'}
             </span>
             <span
               className={cn(
@@ -91,11 +94,14 @@ function StrategyCard({
       <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border-subtle pt-4">
         <Metric label="Win Rate" value={`${strategy.winRate}%`} highlight />
         <Metric
-          label="Total P/L"
+          label="Session P/L"
           value={formatCurrency(strategy.totalPnL)}
           positive={strategy.totalPnL >= 0}
         />
-        <Metric label="Max Drawdown" value={`−${strategy.maxDrawdown}%`} negative />
+        <Metric
+          label="Trades/Day"
+          value={'tradesPerDay' in strategy ? String(strategy.tradesPerDay) : '—'}
+        />
       </div>
     </TerminalCard>
   )

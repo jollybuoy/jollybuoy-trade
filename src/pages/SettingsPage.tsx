@@ -9,39 +9,61 @@ import { AccountSecuritySection } from '@/components/settings/AccountSecuritySec
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings'
 import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
 import { useIbkrData } from '@/hooks/useIbkrData'
-import { getIbkrDisconnectedMessage } from '@/services/ibkrMappers'
+import { loadAccountSettings, saveAccountSettings } from '@/lib/settingsStorage'
 import {
-  DEFAULT_ACCOUNT_SETTINGS,
   type AccountSettingsState,
   type BrokerAccount,
+  type IbkrAccountMode,
 } from '@/types/settings'
 
-function mapStatusToBrokerAccount(
-  status: ReturnType<typeof useIbkrData>['status'],
-  error: string | null,
-  lastUpdated: Date | null,
+function deriveBrokerAccount(
+  mode: IbkrAccountMode,
+  linkedMode: IbkrAccountMode | null,
+  linked: boolean,
+  gatewayAccountId: string | null,
+  gatewayConnected: boolean,
+  statusPort: number | undefined,
+  statusHost: string | undefined,
   loading: boolean,
-  connected: boolean,
+  lastUpdated: Date | null,
+  error: string | null,
 ): BrokerAccount {
-  if (loading && !lastUpdated) {
+  const expectedPort = mode === 'paper' ? 4002 : 4001
+  const isActiveSession = linked && linkedMode === mode
+
+  if (loading && isActiveSession && !lastUpdated) {
     return {
       status: 'pending',
       accountId: null,
       lastSync: null,
-      host: status?.host ?? '127.0.0.1',
-      port: status?.port ?? 4002,
-      mode: 'paper',
+      host: statusHost ?? '127.0.0.1',
+      port: expectedPort,
+      mode,
     }
   }
 
-  if (connected && status) {
+  if (isActiveSession && gatewayConnected && gatewayAccountId) {
     return {
       status: 'connected',
-      accountId: status.account,
+      accountId: gatewayAccountId,
       lastSync: lastUpdated?.toISOString() ?? new Date().toISOString(),
-      host: status.host,
-      port: status.port,
-      mode: status.mode === 'paper' ? 'paper' : 'live',
+      host: statusHost ?? '127.0.0.1',
+      port: statusPort ?? expectedPort,
+      mode,
+    }
+  }
+
+  if (isActiveSession && !gatewayConnected) {
+    return {
+      status: 'disconnected',
+      accountId: null,
+      lastSync: lastUpdated?.toISOString() ?? null,
+      host: statusHost ?? '127.0.0.1',
+      port: expectedPort,
+      mode,
+      errorMessage:
+        error ??
+        `IB Gateway not connected on port ${expectedPort}. Open IB Gateway in ${mode === 'paper' ? 'Paper' : 'Live'} mode and click Connect.`,
     }
   }
 
@@ -49,50 +71,150 @@ function mapStatusToBrokerAccount(
     status: 'disconnected',
     accountId: null,
     lastSync: lastUpdated?.toISOString() ?? null,
-    host: status?.host ?? '127.0.0.1',
-    port: status?.port ?? 4002,
-    mode: 'paper',
-    errorMessage: getIbkrDisconnectedMessage(error ?? status?.error),
+    host: statusHost ?? '127.0.0.1',
+    port: expectedPort,
+    mode,
   }
 }
 
 export function SettingsPage() {
-  const [settings, setSettings] = useState<AccountSettingsState>(DEFAULT_ACCOUNT_SETTINGS)
+  const [settings, setSettings] = useState<AccountSettingsState>(() => loadAccountSettings())
   const [toast, setToast] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const { status, loading, error, lastUpdated, connected, refresh } = useIbkrData()
+  const [busyMode, setBusyMode] = useState<IbkrAccountMode | null>(null)
+  const [busyAction, setBusyAction] = useState<'connect' | 'disconnect' | null>(null)
+
+  const {
+    status,
+    loading,
+    error,
+    lastUpdated,
+    connected,
+    accountId,
+    refresh,
+    connectBroker,
+    disconnectBroker,
+  } = useIbkrData()
 
   useEffect(() => {
-    setSettings((prev) => ({
-      ...prev,
-      broker: {
-        ...prev.broker,
-        paper: mapStatusToBrokerAccount(status, error, lastUpdated, loading, connected),
-      },
-    }))
-  }, [status, error, lastUpdated, loading, connected])
+    setSettings((prev) => {
+      const linked = prev.brokerSession.linked
+      const linkedMode = prev.brokerSession.linkedMode
+      const gatewayAccountId = accountId
+      const gatewayConnected = connected
 
-  const showToast = (message: string, duration = 3000) => {
+      return {
+        ...prev,
+        broker: {
+          paper: deriveBrokerAccount(
+            'paper',
+            linkedMode,
+            linked,
+            gatewayAccountId,
+            gatewayConnected && (status?.port === 4002 || linkedMode === 'paper'),
+            status?.port,
+            status?.host,
+            loading,
+            lastUpdated,
+            error,
+          ),
+          live: deriveBrokerAccount(
+            'live',
+            linkedMode,
+            linked,
+            gatewayAccountId,
+            gatewayConnected && (status?.port === 4001 || linkedMode === 'live'),
+            status?.port,
+            status?.host,
+            loading,
+            lastUpdated,
+            error,
+          ),
+        },
+      }
+    })
+  }, [status, error, lastUpdated, loading, connected, accountId])
+
+  const showToast = (message: string, duration = 4000) => {
     setToast(message)
     setTimeout(() => setToast(null), duration)
   }
 
   const updateSettings = (partial: Partial<AccountSettingsState>) => {
-    setSettings((prev) => ({ ...prev, ...partial }))
+    setSettings((prev) => {
+      const next = { ...prev, ...partial }
+      saveAccountSettings(next)
+      return next
+    })
+  }
+
+  const connectAccount = async (mode: IbkrAccountMode) => {
+    if (mode === 'live' && settings.tradingMode.liveModeLocked) {
+      showToast('Enable live account connection in Trading Mode first.')
+      return
+    }
+
+    if (mode === 'live' && settings.tradingMode.requireLiveConfirmation) {
+      const confirmed = window.confirm(
+        'Connect to your LIVE IBKR account? Real capital will be at risk when strategies run.',
+      )
+      if (!confirmed) return
+    }
+
+    setBusyMode(mode)
+    setBusyAction('connect')
+    try {
+      const nextStatus = await connectBroker(mode)
+      setSettings(loadAccountSettings())
+      if (!nextStatus.account) {
+        showToast('Connected to IB Gateway but no account ID returned. Check IB Gateway login.')
+        return
+      }
+      showToast(
+        mode === 'paper'
+          ? `Paper account connected: ${nextStatus.account} (port 4002)`
+          : `Live account connected: ${nextStatus.account} (port 4001)`,
+      )
+    } catch (cause) {
+      showToast(cause instanceof Error ? cause.message : 'Connection failed.')
+    } finally {
+      setBusyMode(null)
+      setBusyAction(null)
+    }
+  }
+
+  const disconnectAccount = async (mode: IbkrAccountMode) => {
+    if (!settings.brokerSession.linked || settings.brokerSession.linkedMode !== mode) {
+      showToast(`${mode === 'paper' ? 'Paper' : 'Live'} account is not connected.`)
+      return
+    }
+
+    setBusyMode(mode)
+    setBusyAction('disconnect')
+    try {
+      await disconnectBroker()
+      setSettings(loadAccountSettings())
+      showToast(`${mode === 'paper' ? 'Paper' : 'Live'} account disconnected.`)
+    } catch (cause) {
+      showToast(cause instanceof Error ? cause.message : 'Disconnect failed.')
+    } finally {
+      setBusyMode(null)
+      setBusyAction(null)
+    }
   }
 
   const triggerEmergencyStop = () => {
     updateSettings({
       risk: { ...settings.risk, emergencyStopActive: true },
     })
-    showToast('Emergency stop activated — all trading halted (mock)')
+    showToast('Emergency stop activated — bot automation halted')
   }
 
   const resetEmergencyStop = () => {
     updateSettings({
       risk: { ...settings.risk, emergencyStopActive: false },
     })
-    showToast('Emergency stop reset — trading may resume (mock)')
+    showToast('Emergency stop reset — bot may resume when strategies are running')
   }
 
   const exportData = () => {
@@ -104,7 +226,8 @@ export function SettingsPage() {
   }
 
   const saveChanges = () => {
-    setSaveMessage('Settings saved locally (mock — no backend)')
+    saveAccountSettings(settings)
+    setSaveMessage('Settings saved')
     setTimeout(() => setSaveMessage(null), 3000)
   }
 
@@ -112,12 +235,14 @@ export function SettingsPage() {
     <div className="terminal-grid space-y-6">
       <PageHeader
         title="Settings & Risk Control"
-        description="Broker connections, trading mode, risk limits, and account preferences"
+        description="Connect IB Gateway paper (port 4002) or live (port 4001) for real portfolio data"
         action={
           <div className="flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5">
             <Shield className="h-4 w-4 text-accent" />
             <span className="text-xs font-medium text-accent">
-              {settings.risk.emergencyStopActive ? 'TRADING HALTED' : 'IBKR Paper Trading Mode'}
+              {connected && accountId
+                ? `${accountId} · ${settings.brokerSession.linkedMode === 'live' ? 'Live' : 'Paper'}`
+                : 'Not Connected'}
             </span>
           </div>
         }
@@ -125,7 +250,7 @@ export function SettingsPage() {
 
       <IbkrBackendBanner
         loading={loading}
-        error={error}
+        error={settings.brokerSession.linked ? error : null}
         connected={connected}
         lastUpdated={lastUpdated}
         onRetry={() => void refresh()}
@@ -140,8 +265,16 @@ export function SettingsPage() {
       <BrokerConnectionSection
         paper={settings.broker.paper}
         live={settings.broker.live}
+        activeMode={settings.tradingMode.activeMode}
         loading={loading}
-        onRefreshPaper={() => void refresh()}
+        busyMode={busyMode}
+        busyAction={busyAction}
+        liveConnectLocked={settings.tradingMode.liveModeLocked}
+        onRefresh={() => void refresh()}
+        onConnectPaper={() => void connectAccount('paper')}
+        onConnectLive={() => void connectAccount('live')}
+        onDisconnectPaper={() => void disconnectAccount('paper')}
+        onDisconnectLive={() => void disconnectAccount('live')}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

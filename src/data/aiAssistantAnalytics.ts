@@ -68,7 +68,7 @@ export const EXPLAINED_TRADES: ExplainedTrade[] = [
   },
   {
     id: 'ex-3',
-    symbol: 'AMD',
+    symbol: 'AMZN',
     date: '2026-06-05T10:45:00Z',
     side: 'buy',
     entryReason: 'Mean Reversion signal — RSI dipped below 32 with price at lower Bollinger band.',
@@ -116,7 +116,7 @@ export const AI_ACTION_SUGGESTIONS: AiActionSuggestion[] = [
   {
     id: 'act-3',
     label: 'Add Stop Loss',
-    description: 'AMD Mean Reversion entry lacks a trailing stop in current paper config.',
+    description: 'AMZN Mean Reversion entry lacks a trailing stop in current paper config.',
     priority: 'medium',
     actionType: 'add_stop_loss',
   },
