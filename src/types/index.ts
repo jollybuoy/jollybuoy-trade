@@ -5,6 +5,7 @@ export interface Position {
   avgCost: number
   currentPrice: number
   sector: string
+  sparkline?: number[]
 }
 
 export interface WatchlistItem {
@@ -48,6 +49,15 @@ export interface PaperTrade {
   status: 'filled' | 'pending' | 'cancelled'
 }
 
+export interface PaperPosition {
+  symbol: string
+  name: string
+  shares: number
+  avgCost: number
+  currentPrice: number
+  sparkline: number[]
+}
+
 export interface Trade {
   id: string
   symbol: string
@@ -63,6 +73,7 @@ export interface Trade {
 export interface PortfolioSnapshot {
   date: string
   value: number
+  benchmark?: number
 }
 
 export interface MarketIndex {
@@ -72,8 +83,31 @@ export interface MarketIndex {
   changePercent: number
 }
 
-export interface NavItem {
-  label: string
-  path: string
-  icon: string
+export interface BotStatus {
+  name: string
+  status: 'running' | 'idle' | 'error'
+  uptime: string
+  signalsToday: number
+  lastSignal: string
+  model: string
+  confidence: number
+}
+
+export interface RiskControl {
+  maxDailyLoss: number
+  currentDailyLoss: number
+  maxPositionSize: number
+  currentExposure: number
+  maxDrawdown: number
+  currentDrawdown: number
+  stopLossEnabled: boolean
+  trailingStopEnabled: boolean
+}
+
+export interface ScannerStats {
+  totalScanned: number
+  signalsFound: number
+  avgScore: number
+  lastScan: string
+  topSignal: string
 }

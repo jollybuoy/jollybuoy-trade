@@ -1,111 +1,59 @@
-import { Download } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
-import { DataTable } from '@/components/ui/DataTable'
-import { StatusBadge } from '@/components/ui/Badge'
-import { tradeHistory } from '@/data/mockData'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
+import { AccountPnLSummary } from '@/components/trade-history/AccountPnLSummary'
+import { PendingOrdersTable } from '@/components/trade-history/PendingOrdersTable'
+import { ExecutedOrdersTable } from '@/components/trade-history/ExecutedOrdersTable'
+import { useIbkrData } from '@/hooks/useIbkrData'
 
 export function TradeHistoryPage() {
-  const totalVolume = tradeHistory
-    .filter((t) => t.status === 'filled' || t.status === 'partial')
-    .reduce((sum, t) => sum + t.total, 0)
+  const {
+    account,
+    openOrders,
+    executions,
+    loading,
+    error,
+    connected,
+    lastUpdated,
+    refresh,
+  } = useIbkrData()
 
   return (
-    <div className="space-y-6">
+    <div className="terminal-grid space-y-6">
       <PageHeader
         title="Trade History"
-        description="Complete record of all executed trades"
+        description="Live pending orders, executed fills, and P/L from your connected IBKR account"
         action={
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
+            onClick={() => void refresh()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-ai/30 bg-ai/10 px-4 py-2 text-sm font-medium text-ai transition-colors hover:bg-ai/20 disabled:opacity-50"
           >
-            <Download className="h-4 w-4" />
-            Export CSV
+            <RefreshCw className={loading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            Refresh
           </button>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Total Trades
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">{tradeHistory.length}</p>
-        </Card>
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Filled Trades
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">
-            {tradeHistory.filter((t) => t.status === 'filled').length}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Total Volume
-          </p>
-          <p className="mt-2 font-mono text-2xl font-semibold">{formatCurrency(totalVolume)}</p>
-        </Card>
-      </div>
+      <IbkrBackendBanner
+        loading={loading}
+        error={error}
+        connected={connected}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
 
-      <Card padding="none">
-        <DataTable
-          data={tradeHistory}
-          keyExtractor={(t) => t.id}
-          columns={[
-            {
-              key: 'timestamp',
-              header: 'Date',
-              render: (t) => (
-                <span className="text-text-secondary">{formatDateTime(t.timestamp)}</span>
-              ),
-            },
-            {
-              key: 'symbol',
-              header: 'Symbol',
-              render: (t) => <span className="font-semibold">{t.symbol}</span>,
-            },
-            {
-              key: 'side',
-              header: 'Side',
-              render: (t) => <StatusBadge status={t.side} />,
-            },
-            {
-              key: 'quantity',
-              header: 'Qty',
-              align: 'right',
-              render: (t) => <span className="font-mono">{t.quantity}</span>,
-            },
-            {
-              key: 'price',
-              header: 'Price',
-              align: 'right',
-              render: (t) => <span className="font-mono">{formatCurrency(t.price)}</span>,
-            },
-            {
-              key: 'total',
-              header: 'Total',
-              align: 'right',
-              render: (t) => <span className="font-mono">{formatCurrency(t.total)}</span>,
-            },
-            {
-              key: 'strategy',
-              header: 'Strategy',
-              render: (t) => (
-                <span className="text-text-secondary">{t.strategy ?? 'Manual'}</span>
-              ),
-            },
-            {
-              key: 'status',
-              header: 'Status',
-              align: 'right',
-              render: (t) => <StatusBadge status={t.status} />,
-            },
-          ]}
-        />
-      </Card>
+      <AccountPnLSummary
+        account={account}
+        pendingCount={openOrders.length}
+        executedCount={executions.length}
+        connected={connected}
+      />
+
+      <PendingOrdersTable orders={openOrders} loading={loading && !connected} />
+
+      <ExecutedOrdersTable executions={executions} loading={loading && !connected} />
     </div>
   )
 }

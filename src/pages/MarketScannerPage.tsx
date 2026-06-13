@@ -1,120 +1,111 @@
-import { Filter, RefreshCw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
-import { DataTable } from '@/components/ui/DataTable'
-import { StatusBadge } from '@/components/ui/Badge'
-import { scannerResults } from '@/data/mockData'
-import { formatCurrency, formatPercent, formatNumber, getChangeColor } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { MarketDataBanner } from '@/components/market/MarketDataBanner'
+import { MarketOverviewCards } from '@/components/scanner/MarketOverviewCards'
+import { ScannerFiltersPanel } from '@/components/scanner/ScannerFiltersPanel'
+import { ScannerTable } from '@/components/scanner/ScannerTable'
+import { AiInsightPanel } from '@/components/scanner/AiInsightPanel'
+import {
+  AI_INSIGHTS,
+  MARKET_OVERVIEW,
+  SCANNER_ROWS,
+  SCANNER_STATS,
+} from '@/data/marketScanner'
+import { useMarketQuotes } from '@/hooks/useMarketQuotes'
+import { mergeQuotesIntoScannerRows } from '@/services/market/mergeQuotes'
+import { DEFAULT_SCANNER_FILTERS } from '@/types/scanner'
+import type { ScannerFilters, ScannerRow } from '@/types/scanner'
+import { formatDateTime } from '@/lib/utils'
 
-const filters = ['All Signals', 'Breakout', 'Momentum', 'Oversold', 'Volume Spike']
+const SCANNER_REFRESH_MS = 60_000
+
+function filterRows(rows: ScannerRow[], filters: ScannerFilters): ScannerRow[] {
+  return rows.filter((row) => {
+    if (filters.market !== 'all' && row.market !== filters.market) return false
+    if (filters.sector !== 'all' && row.sector !== filters.sector) return false
+    if (row.price < filters.priceMin || row.price > filters.priceMax) return false
+    if (row.volume < filters.minVolume) return false
+    if (filters.signal !== 'all' && row.signal !== filters.signal) return false
+    if (filters.strategyMatch !== 'all' && row.strategyMatch !== filters.strategyMatch) return false
+    return true
+  })
+}
 
 export function MarketScannerPage() {
+  const [filters, setFilters] = useState<ScannerFilters>(DEFAULT_SCANNER_FILTERS)
+  const [isScanning, setIsScanning] = useState(false)
+
+  const symbols = useMemo(() => SCANNER_ROWS.map((row) => row.symbol), [])
+  const {
+    quotes,
+    loading,
+    refreshing,
+    errorMessage,
+    symbolErrors,
+    lastUpdated,
+    refresh,
+  } = useMarketQuotes(symbols, { refreshIntervalMs: SCANNER_REFRESH_MS })
+
+  const liveRows = useMemo(
+    () => mergeQuotesIntoScannerRows(SCANNER_ROWS, quotes),
+    [quotes],
+  )
+
+  const filteredRows = useMemo(() => filterRows(liveRows, filters), [liveRows, filters])
+
+  const runScan = () => {
+    setIsScanning(true)
+    void refresh().finally(() => {
+      setTimeout(() => setIsScanning(false), 600)
+    })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="terminal-grid space-y-6">
       <PageHeader
         title="Market Scanner"
-        description="AI-powered scan results across the market"
+        description="Mega Cap 7 US universe — live Yahoo Finance quotes for AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA"
         action={
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
+            onClick={runScan}
+            disabled={isScanning || loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-ai/30 bg-ai/10 px-4 py-2 text-sm font-medium text-ai transition-colors hover:bg-ai/20 disabled:opacity-50"
           >
-            <RefreshCw className="h-4 w-4" />
-            Run Scan
+            <RefreshCw className={isScanning || refreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            {isScanning || refreshing ? 'Scanning…' : 'Run Scan'}
           </button>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-4 w-4 text-text-muted" />
-        {filters.map((filter, index) => (
-          <button
-            key={filter}
-            type="button"
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-              index === 0
-                ? 'bg-accent/10 text-accent'
-                : 'bg-surface-elevated text-text-secondary hover:bg-surface-hover hover:text-text-primary',
-            )}
-          >
-            {filter}
-          </button>
-        ))}
+      <MarketDataBanner
+        loading={loading}
+        refreshing={refreshing}
+        errorMessage={errorMessage}
+        symbolErrorCount={symbolErrors.length}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
+
+      <div className="flex items-center gap-2 text-xs text-text-muted">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent pulse-live" />
+        {SCANNER_STATS.totalScanned.toLocaleString()} symbols scanned · Last update{' '}
+        {lastUpdated ? formatDateTime(lastUpdated.toISOString()) : formatDateTime(SCANNER_STATS.lastScan)}
       </div>
 
-      <Card padding="none">
-        <DataTable
-          data={scannerResults}
-          keyExtractor={(item) => item.symbol}
-          columns={[
-            {
-              key: 'score',
-              header: 'Score',
-              render: (item) => (
-                <div className="flex items-center gap-2">
-                  <div
-                    className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-lg font-mono text-sm font-bold',
-                      item.score >= 85
-                        ? 'bg-accent/10 text-accent'
-                        : item.score >= 75
-                          ? 'bg-info/10 text-info'
-                          : 'bg-warning/10 text-warning',
-                    )}
-                  >
-                    {item.score}
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: 'symbol',
-              header: 'Symbol',
-              render: (item) => (
-                <div>
-                  <p className="font-semibold">{item.symbol}</p>
-                  <p className="text-xs text-text-secondary">{item.name}</p>
-                </div>
-              ),
-            },
-            {
-              key: 'signal',
-              header: 'Signal',
-              render: (item) => <StatusBadge status={item.signal} />,
-            },
-            {
-              key: 'price',
-              header: 'Price',
-              align: 'right',
-              render: (item) => (
-                <span className="font-mono">{formatCurrency(item.price)}</span>
-              ),
-            },
-            {
-              key: 'changePercent',
-              header: '% Change',
-              align: 'right',
-              render: (item) => (
-                <span className={cn('font-mono', getChangeColor(item.changePercent))}>
-                  {formatPercent(item.changePercent)}
-                </span>
-              ),
-            },
-            {
-              key: 'volume',
-              header: 'Volume',
-              align: 'right',
-              render: (item) => (
-                <span className="font-mono text-text-secondary">
-                  {formatNumber(item.volume)}
-                </span>
-              ),
-            },
-          ]}
-        />
-      </Card>
+      <MarketOverviewCards cards={MARKET_OVERVIEW} />
+
+      <div className="grid gap-6 xl:grid-cols-4">
+        <div className="xl:col-span-1">
+          <ScannerFiltersPanel filters={filters} onChange={setFilters} />
+        </div>
+
+        <div className="space-y-6 xl:col-span-3">
+          <ScannerTable rows={filteredRows} resultCount={filteredRows.length} loading={loading && quotes.length === 0} />
+          <AiInsightPanel insights={AI_INSIGHTS} />
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,95 +1,61 @@
-import { Plus, Star } from 'lucide-react'
+import { useMemo } from 'react'
+import { Eye } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
-import { DataTable } from '@/components/ui/DataTable'
-import { watchlist } from '@/data/mockData'
-import { formatCurrency, formatPercent, formatNumber, getChangeColor } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { MarketDataBanner } from '@/components/market/MarketDataBanner'
+import { WatchlistTable } from '@/components/watchlist/WatchlistTable'
+import { MEGA_CAP_7_SYMBOLS } from '@/data/megaCap7'
+import { MEGA_CAP_7_WATCHLIST, WATCHLIST_GROUPS } from '@/data/watchlistAnalytics'
+import { useMarketQuotes } from '@/hooks/useMarketQuotes'
+import { mergeQuotesIntoWatchlistRows } from '@/services/market/mergeQuotes'
+
+const WATCHLIST_REFRESH_MS = 60_000
+const WATCHLIST_GROUP = WATCHLIST_GROUPS[0]
 
 export function WatchlistPage() {
+  const symbols = useMemo(() => [...MEGA_CAP_7_SYMBOLS], [])
+
+  const {
+    quotes,
+    loading,
+    refreshing,
+    errorMessage,
+    symbolErrors,
+    lastUpdated,
+    refresh,
+  } = useMarketQuotes(symbols, { refreshIntervalMs: WATCHLIST_REFRESH_MS })
+
+  const liveRows = useMemo(
+    () => mergeQuotesIntoWatchlistRows(MEGA_CAP_7_WATCHLIST, quotes),
+    [quotes],
+  )
+
   return (
-    <div className="space-y-6">
+    <div className="terminal-grid space-y-6">
       <PageHeader
         title="Watchlist"
-        description="Monitor symbols you're tracking"
+        description="Mega Cap 7 US stocks — live price, change %, volume, and market cap"
         action={
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-accent-muted"
-          >
-            <Plus className="h-4 w-4" />
-            Add Symbol
-          </button>
+          <div className="flex items-center gap-2 rounded-lg border border-ai/20 bg-ai/5 px-3 py-1.5">
+            <Eye className="h-4 w-4 text-ai" />
+            <span className="text-xs font-medium text-ai">7 symbols · Yahoo Finance</span>
+          </div>
         }
       />
 
-      <Card padding="none">
-        <DataTable
-          data={watchlist}
-          keyExtractor={(item) => item.symbol}
-          columns={[
-            {
-              key: 'symbol',
-              header: 'Symbol',
-              render: (item) => (
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-warning" />
-                  <div>
-                    <p className="font-semibold">{item.symbol}</p>
-                    <p className="text-xs text-text-secondary">{item.name}</p>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: 'price',
-              header: 'Last Price',
-              align: 'right',
-              render: (item) => (
-                <span className="font-mono font-medium">{formatCurrency(item.price)}</span>
-              ),
-            },
-            {
-              key: 'change',
-              header: 'Change',
-              align: 'right',
-              render: (item) => (
-                <span className={cn('font-mono', getChangeColor(item.change))}>
-                  {item.change > 0 ? '+' : ''}
-                  {formatCurrency(item.change)}
-                </span>
-              ),
-            },
-            {
-              key: 'changePercent',
-              header: '% Change',
-              align: 'right',
-              render: (item) => (
-                <span
-                  className={cn(
-                    'inline-flex rounded-md px-2 py-0.5 font-mono text-xs font-medium',
-                    item.changePercent >= 0
-                      ? 'bg-accent/10 text-accent'
-                      : 'bg-danger/10 text-danger',
-                  )}
-                >
-                  {formatPercent(item.changePercent)}
-                </span>
-              ),
-            },
-            {
-              key: 'volume',
-              header: 'Volume',
-              align: 'right',
-              render: (item) => (
-                <span className="font-mono text-text-secondary">
-                  {formatNumber(item.volume)}
-                </span>
-              ),
-            },
-          ]}
-        />
-      </Card>
+      <MarketDataBanner
+        loading={loading}
+        refreshing={refreshing}
+        errorMessage={errorMessage}
+        symbolErrorCount={symbolErrors.length}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
+
+      <WatchlistTable
+        group={WATCHLIST_GROUP}
+        rows={liveRows}
+        loading={loading && quotes.length === 0}
+      />
     </div>
   )
 }

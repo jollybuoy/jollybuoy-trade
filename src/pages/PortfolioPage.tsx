@@ -1,129 +1,64 @@
+import { useMemo } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { StatCard } from '@/components/ui/StatCard'
-import { Card, CardHeader } from '@/components/ui/Card'
-import { DataTable } from '@/components/ui/DataTable'
-import { PortfolioChart, AllocationChart, AllocationLegend } from '@/components/charts/PortfolioChart'
-import { positions, portfolioSummary, portfolioHistory, sectorAllocation } from '@/data/mockData'
-import {
-  formatCurrency,
-  formatPercent,
-  getChangeColor,
-  getPositionPnL,
-  getPositionValue,
-} from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { IbkrAccountSummaryCards } from '@/components/ibkr/IbkrAccountSummaryCards'
+import { IbkrBackendBanner } from '@/components/ibkr/IbkrBackendBanner'
+import { PortfolioHoldingsTable } from '@/components/portfolio/PortfolioHoldingsTable'
+import { useIbkrData } from '@/hooks/useIbkrData'
+import { loadAccountSettings } from '@/lib/settingsStorage'
+import { mapIbkrPositionToPortfolioHolding } from '@/services/ibkrMappers'
 
 export function PortfolioPage() {
-  const totalInvested = positions.reduce((sum, p) => sum + p.shares * p.avgCost, 0)
-  const totalMarketValue = positions.reduce((sum, p) => sum + getPositionValue(p), 0)
+  const { account, positions, loading, error, connected, accountId, lastUpdated, refresh } =
+    useIbkrData()
+  const settings = loadAccountSettings()
+
+  const holdings = useMemo(
+    () => positions.map(mapIbkrPositionToPortfolioHolding),
+    [positions],
+  )
+
+  const modeLabel = settings.brokerSession.linkedMode === 'live' ? 'Live' : 'Paper'
 
   return (
-    <div className="space-y-6">
+    <div className="terminal-grid space-y-6">
       <PageHeader
         title="Portfolio"
-        description="Track your holdings, allocation, and performance"
+        description={
+          connected && accountId
+            ? `Live ${modeLabel} account ${accountId} from IB Gateway port ${settings.brokerSession.linkedMode === 'live' ? '4001' : '4002'}`
+            : 'Connect IB Gateway paper account (port 4002) in Settings to load live holdings'
+        }
+        action={
+          <div className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5 text-xs font-medium text-accent">
+            {connected && accountId ? `${modeLabel} · ${accountId}` : 'Not Connected'}
+          </div>
+        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Total Value"
-          value={formatCurrency(portfolioSummary.totalValue)}
-          change={`${formatPercent(portfolioSummary.dayChangePercent)} today`}
-          changeValue={portfolioSummary.dayChangePercent}
-        />
-        <StatCard
-          label="Invested"
-          value={formatCurrency(totalInvested)}
-        />
-        <StatCard
-          label="Market Value"
-          value={formatCurrency(totalMarketValue)}
-        />
-        <StatCard
-          label="Unrealized P&L"
-          value={formatCurrency(portfolioSummary.totalPnL)}
-          change={formatPercent(portfolioSummary.totalPnLPercent)}
-          changeValue={portfolioSummary.totalPnLPercent}
-        />
-      </div>
+      <IbkrBackendBanner
+        loading={loading}
+        error={error}
+        connected={connected}
+        lastUpdated={lastUpdated}
+        onRetry={() => void refresh()}
+      />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Performance History" />
-          <PortfolioChart data={portfolioHistory} />
-        </Card>
+      <IbkrAccountSummaryCards
+        account={account}
+        loading={loading}
+        connected={connected}
+      />
 
-        <Card>
-          <CardHeader title="Allocation" />
-          <AllocationChart data={sectorAllocation} />
-          <AllocationLegend data={sectorAllocation} />
-        </Card>
-      </div>
-
-      <Card padding="none">
-        <div className="border-b border-border-subtle p-5">
-          <CardHeader title="All Positions" description={`${positions.length} holdings`} />
-        </div>
-        <DataTable
-          data={positions}
-          keyExtractor={(p) => p.symbol}
-          columns={[
-            {
-              key: 'symbol',
-              header: 'Symbol',
-              render: (p) => (
-                <div>
-                  <p className="font-semibold">{p.symbol}</p>
-                  <p className="text-xs text-text-secondary">{p.name}</p>
-                </div>
-              ),
-            },
-            { key: 'sector', header: 'Sector', render: (p) => p.sector },
-            {
-              key: 'shares',
-              header: 'Shares',
-              align: 'right',
-              render: (p) => <span className="font-mono">{p.shares}</span>,
-            },
-            {
-              key: 'avgCost',
-              header: 'Avg Cost',
-              align: 'right',
-              render: (p) => <span className="font-mono">{formatCurrency(p.avgCost)}</span>,
-            },
-            {
-              key: 'currentPrice',
-              header: 'Current',
-              align: 'right',
-              render: (p) => (
-                <span className="font-mono">{formatCurrency(p.currentPrice)}</span>
-              ),
-            },
-            {
-              key: 'value',
-              header: 'Market Value',
-              align: 'right',
-              render: (p) => (
-                <span className="font-mono">{formatCurrency(getPositionValue(p))}</span>
-              ),
-            },
-            {
-              key: 'pnl',
-              header: 'P&L',
-              align: 'right',
-              render: (p) => {
-                const { pnl, pnlPercent } = getPositionPnL(p)
-                return (
-                  <div className={cn('font-mono', getChangeColor(pnl))}>
-                    <p>{formatCurrency(pnl)}</p>
-                    <p className="text-xs">{formatPercent(pnlPercent)}</p>
-                  </div>
-                )
-              },
-            },
-          ]}
-        />
-      </Card>
+      <PortfolioHoldingsTable
+        holdings={holdings}
+        totalPortfolioValue={account?.netLiquidation ?? 0}
+        loading={loading && !connected}
+        emptyMessage={
+          connected
+            ? 'No open positions in this IBKR account.'
+            : 'Connect your paper account in Settings (IB Gateway port 4002).'
+        }
+      />
     </div>
   )
 }

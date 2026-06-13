@@ -1,4 +1,5 @@
 import { Menu, Bell, Search } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 interface HeaderProps {
   title: string
@@ -32,6 +33,8 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             ⌘K
           </kbd>
         </div>
+
+        <ThemeToggle />
 
         <button
           type="button"
